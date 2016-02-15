@@ -4,3 +4,4 @@ node_modules/
 # Ignore built bundles
 bundle/*
 !bundle/index.html
+.idea

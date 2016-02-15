@@ -21,6 +21,12 @@ module.exports = {
       {
         test: /\.vue$/,
         loader: 'vue'
+      },
+      {test: /\.js?$/, loader: 'babel', exclude: /node_modules/},
+      {test: /\.js$/, exclude: /node_modules/, loader: 'babel-loader'},
+      {
+        test: /\.(png|jpg|gif)$/,
+        loader: 'file?name=[name].[ext]?[hash]'
       }
     ]
   },
@@ -29,8 +35,17 @@ module.exports = {
       scss: 'style!css!sass'
     }
   },
+  babel: {
+    presets: ['es2015'],
+    plugins: ['transform-runtime']
+  },
+  externals: {
+    "jquery": "jQuery",
+    "d3": "d3"
+  },
   plugins: [
     new ExtractTextPlugin('./[name].css'),
     new CommonsChunkPlugin('bragi', './bragi.js')
-  ]
+  ],
+  devtool: '#source-map'
 };
