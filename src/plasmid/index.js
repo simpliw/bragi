@@ -1,6 +1,7 @@
 /**
  * Created by bqxu on 16/2/2.
  */
+require('./style.scss');
 let {Scope} =require("./core/scope");
 let {col_ge} =require("./d3-ext/color");
 let {viewBox,appendSVG} =require("./d3-ext/layout");
@@ -12,7 +13,9 @@ let {
   geX,geY,
   radianLength4angle,
   angle4xy,
-  scaleLinear
+  xy4angle,
+  scaleLinear,
+  percent100
   } =require("./d3-ext/scale");
 
 var def = {
@@ -37,139 +40,194 @@ var init = (target, opts)=> {
   }
   origin = Array.from(gbff.origin);
   features = Array.from(gbff.features);
+  let className = target.className;
+  className = className ? className.split(" ") : [];
+  if (!className.find((n) => n == 'plasmid')) {
+    className.push('plasmid');
+    target.className = className.filter(x => true).join(' ');
+  }
   svg = appendSVG(d3.select(target), {
     width: width,
     height: height,
     viewBox: viewBox(0, 0, width, width)
   });
   g = svg.append('g');
-  render(svg, g, origin, features, width);
+  let plasmid = render(svg, g, origin, features, width);
   return {
     reset: function (percent) {
-      _percent = percent;
-      render(svg, g, origin, features, width, _percent, _angle);
+      plasmid.scale(percent)
     },
     transition: function (angle) {
       _angle = angle;
-      render(svg, g, origin, features, width, _percent, _angle);
+      plasmid.transition(angle);
+    },
+    getScale: function () {
+      return plasmid.getScale();
     }
   }
 };
 
-
-let render = function (svg, g, origin, features, width, percent = 100, angle = 0) {
-  let scope = new Scope(origin, features, width, width);
-  let scale = scope.scale(0.1);
-  let circle = scale.circle;
-  let limit = scale.limit;
-  let level = scope.level;
+let renderBuild = function (svg, g, scope, scale, circle, limit) {
   g.attr("transform", translate(circle.translate().x, circle.translate().y)).attr("fill", '##efefef');
   g.html("");
-  if (circle.r > scope.rwidth) {
-    renderOrigin(g, circle.x, circle.y, circle.r, scope.origin, 10);
+  if (limit.level() == '1') {
+    renderOrigin(g, circle.x, circle.y, circle.r, scope.origin);
+  } else if (limit.level() == '2') {
+    renderColor(g, circle.x, circle.y, circle.r, scope.origin)
   } else {
     renderLoop(g, circle.x, circle.y, circle.r, 10);
   }
   renderFeatures(g, circle.x, circle.y, circle.r, scope.features, scope.origin.length);
   renderLimit(g, circle.x, circle.y, limit.r, limit.du, scope.origin.length);
-  setLine(svg, g, circle.x, circle.y, circle.r, width);
+  setLine(svg, g, scope, scale);
+};
+
+let render = function (svg, g, origin, features, width) {
+  let scope = new Scope(origin, features, width, width);
+  scope.angle = 0;
+  let $width = scope.r2;
+  let scales = scope.scales;
+  let scale = scope.scale(percent100($width, scope.r1));
+  let circle = scale.circle;
+  let limit = scale.limit;
+  renderBuild(svg, g, scope, scale, circle, limit);
   return {
     scale: function (per) {
-      var percent = 100;
-      switch (per) {
-        case '+1':
-          break;
-        case '-1':
-          break;
-        case 'max':
-          break;
-        case 'min':
-          break;
-        default:
-          break;
+      let index = scales.findIndex((x)=>x == $width);
+      if (index < 0) {
+        index = 0;
       }
-      render(svg, g, origin, features, width, percent)
+      if (per == '+') {
+        index++;
+        if (index >= scales.length) index--;
+      } else if (per == '-') {
+        index--;
+        if (index < 0) index++;
+      } else if (per == 'max') {
+        index = scales.length;
+      } else if (per == 'min') {
+        index = 0;
+      }
+      $width = scales[index];
+      scale = scope.scale(percent100($width, scope.r1));
+      circle = scale.circle;
+      limit = scale.limit;
+      renderBuild(svg, g, scope, scale, circle, limit);
     },
     transition: function (angle) {
-      console.log(angle);
+      scope.angle = angle;
+      g.attr("transform", transition({
+        x: circle.translate().x, y: circle.translate().y
+      }, {}, {
+        angle: -angle
+      }))
+    },
+    getScale: function () {
+      return percent100($width, scope.r1);
     }
   }
 };
 
-var setLine = function (svg, g, cX, cY, r, width) {
+var setLine = function (svg, g, scope, scale) {
   let ig = g.append('g');
+  let ol = scope.origin.length;
+  let ang4ge = angle4ge(ol);
   let path = ig.append("path")
     .attr('d', function () {
       return line({
         x: 0,
-        y: -(r - width / 8)
+        y: -(scale.limit.r - (Math.ceil(scope.level / 2) + 4) * 20)
       }, {
         x: 0,
-        y: -(r + width / 8)
+        y: -(scale.limit.r + 35)
       });
-    }).attr("stroke", 'black').attr("stroke-width", '3px');
+    }).attr("stroke", 'black').attr("stroke-width", '2px');
+  let text = ig.append("text")
+    .text('0').style("font-size", '16px').style("font-weight", '300')
+    .attr("transform", function (data, index) {
+      return transition({
+        x: 0,
+        y: -(scale.limit.r + 35)
+      }, {}, {
+        angle: 0
+      })
+    });
   svg.on('mousemove', function (event) {
     let $x = d3.event.offsetX;
     let $y = d3.event.offsetY;
-    let angle = angle4xy(cX, cY, $x, $y);
+    let angle = angle4xy(scale.circle.x, scale.circle.y, $x, $y);
+    let index = Math.floor((angle + scope.angle) / ang4ge);
+    let ang = index * ang4ge;
+    let xy = xy4angle(ang, scale.limit.r + 35);
     path.attr("transform", function () {
-      return rotate(angle, 0, 0)
+      return rotate(ang, 0, 0)
+    });
+    let _index = index;
+    if (_index < 0) {
+      _index = ol + index
+    } else if (_index > ol) {
+      _index = _index - ol;
+    }
+    text.text(_index).attr("transform", function (data, index) {
+      return transition({
+        x: xy.x,
+        y: -xy.y
+      }, {}, {
+        angle: ang
+      })
     });
   })
 };
 
-let renderLoop = function (g, cX, cY, r, unitGE) {
+let renderLoop = function (g, cX, cY, r, width) {
   g = g.append('g');
   g.append("path")
     .attr('d', d3.svg.arc()
       .startAngle(0)
       .endAngle(2 * Math.PI * 0.99999)
-      .innerRadius(r - 5 * unitGE / 4)
-      .outerRadius(r - unitGE)
+      .innerRadius(r)
+      .outerRadius(r - width)
     ).attr("fill", 'green');
 };
 
-var renderOrigin = function (g, cX, cY, r, origin, unitGE) {
+var renderOrigin = function (g, cX, cY, r, origin) {
   let ol = origin.length;
-  let originRadian = radian4ge(ol);
   g = g.append('g');
   g = g.selectAll("g").data(origin).enter().append('g');
-  let stroke = false;
-  if (stroke) {
-    g.append("path").attr('d', d3.svg.arc()
-      .startAngle(function (data, index) {
-        return index * originRadian
-      })
-      .endAngle(function (data, index) {
-        return (index + 1) * originRadian
-      })
-      .innerRadius(function (d) {
-        return r - unitGE;
-      })
-      .outerRadius(function (d) {
-        return r;
-      })
-    ).attr("fill", function (data, i) {
-      return 'none';
-      //return col_ge(data);
-    }).attr("stroke", function (data, i) {
-      return 'none';
-      //return col_ge(data);
-    }).attr("stroke-width", function () {
-      return "1px";
-    });
-  }
   g.append('text').text(function (data) {
     return data.data;
   }).attr("fill", function (data) {
     return col_ge(data.data);
   }).attr("transform", function (data, index) {
     return transition({
-      x: (r - 3 * unitGE / 4) * geX(ol, index), y: -(r - 3 * unitGE / 4) * geY(ol, index)
+      x: r * geX(ol, index), y: -r * geY(ol, index)
     }, {}, {
       angle: index * angle4ge(ol)
     })
-  }).style("font-size", '16px').style("font-weight", '500')
+  }).style("font-size", '16px').style("font-weight", '500').attr({});
+};
+
+var renderColor = function (g, cX, cY, r, origin) {
+  let ol = origin.length;
+  let originRadian = radian4ge(ol);
+  g = g.append('g');
+  g = g.selectAll("g").data(origin).enter().append('g');
+  g.append("path").attr('d', d3.svg.arc()
+    .startAngle(function (data, index) {
+      return index * originRadian
+    })
+    .endAngle(function (data, index) {
+      return (index + 1) * originRadian
+    })
+    .innerRadius(function (d) {
+      return r - 10;
+    })
+    .outerRadius(function (d) {
+      return r;
+    })
+  ).attr("fill", function (data, i) {
+    return col_ge(data.data);
+  });
 };
 
 var renderFeatures = function (g, cX, cY, r, features, ol) {
@@ -178,10 +236,15 @@ var renderFeatures = function (g, cX, cY, r, features, ol) {
   g = g.selectAll("g").data(features).enter().append('g');
   g.append("path").attr('d', function (d) {
     if (d.loc != null) {
+      let level = d.loc.level;
+      let width = (Math.round(level / 2 + 1) * 16 + 4 );
+      if (level % 2 == 1) {
+        width = 0 - (Math.round(level / 2) * 16 - 10 + 4);
+      }
       if (d.loc.complement == 'true') {
-        return ring(r, d.loc.endAngle, d.loc.startAngle, -2)
+        return ring(r - width, d.loc.endAngle, d.loc.startAngle, -angle)
       } else {
-        return ring(r, d.loc.startAngle, d.loc.endAngle)
+        return ring(r - width, d.loc.startAngle, d.loc.endAngle, angle)
       }
     }
   }).style('fill', function (d) {
@@ -190,9 +253,9 @@ var renderFeatures = function (g, cX, cY, r, features, ol) {
 };
 
 var renderLimit = function (g, cX, cY, r, limit, ol) {
+  let angle = angle4ge(ol);
   let li = [];
   let _limit = 0;
-  limit = 100;
   while (_limit < ol) {
     li.push(_limit);
     _limit += limit;
@@ -201,13 +264,26 @@ var renderLimit = function (g, cX, cY, r, limit, ol) {
   g = g.selectAll("g").data(li).enter().append('g');
   g.append("path").attr('d', function (data) {
       return line({
-        x: r * Math.cos(( data - 90) / 180 * Math.PI),
-        y: r * Math.sin((data - 90) / 180 * Math.PI)
+        x: r * Math.cos(( data * angle - 90) / 180 * Math.PI),
+        y: r * Math.sin((data * angle - 90) / 180 * Math.PI)
       }, {
-        x: ( r - 10) * Math.cos((data - 90) / 180 * Math.PI),
-        y: ( r - 10) * Math.sin((data - 90) / 180 * Math.PI)
+        x: ( r + 15) * Math.cos((data * angle - 90) / 180 * Math.PI),
+        y: ( r + 15) * Math.sin((data * angle - 90) / 180 * Math.PI)
       });
     }
   ).attr("stroke", 'black').attr("stroke-width", '2px');
+  g.append('text').text(function (data) {
+    return data;
+  }).attr("fill", function (data) {
+    return 'black';
+  }).attr("transform", function (data, index) {
+    return transition({
+      x: (r + 20) * geX(ol, data),
+      y: -(r + 20) * geY(ol, data)
+    }, {}, {
+      angle: data * angle4ge(ol)
+    })
+  }).style("font-size", '16px').style("font-weight", '500')
 };
+
 export  {init};

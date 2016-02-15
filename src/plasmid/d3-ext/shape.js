@@ -9,7 +9,7 @@ var line = function (start = {}, end = {}) {
   return `M${startX} ${startY}L${endX} ${endY}Z`;
 };
 
-var ring = function (r, startAngle = 0, endAngle = 180, angle = 2, width = 3) {
+var ring = function (r, startAngle = 0, endAngle = 180, angle = 2, width = 5) {
   let outR = r + width;
   let inR = r - width;
   let {x:outSX,y:outSY}=xy4angle(startAngle + angle, outR);
@@ -19,14 +19,24 @@ var ring = function (r, startAngle = 0, endAngle = 180, angle = 2, width = 3) {
   let {x:inSX,y:inSY}=xy4angle(startAngle + angle, inR);
   let {x:inEX,y:inEY}=xy4angle(endAngle, inR);
   let res = [];
-  var comp = ['0,0,0', '0,0,1'];
-  var flag = angle > 0 ? 1 : 0;
-  res.push(`M${outSX} ${outSY}`);
-  res.push(`A${outR},${outR} ${comp[1 - flag]} ${outEX},${outEY}`);
-  res.push(`L${midEX},${midEY}`);
-  res.push(`L${inEX},${inEY}`);
-  res.push(`A${inR},${inR} ${comp[flag]} ${inSX},${inSY}`);
-  res.push(`L${midSX},${midSY}`);
+  let roundFlag = 1;
+  let angleFlag = 0;
+  if (endAngle > startAngle) {
+    if (endAngle - startAngle > 180) {
+      angleFlag = 1;
+    }
+  } else {
+    if (startAngle - endAngle > 180) {
+      angleFlag = 1;
+    }
+    roundFlag=0;
+  }
+  res.push(`M${outSX} ${-outSY}`);
+  res.push(`A${outR},${outR} 0,${angleFlag},${roundFlag} ${outEX},${-outEY}`);
+  res.push(`L${midEX},${-midEY}`);
+  res.push(`L${inEX},${-inEY}`);
+  res.push(`A${inR},${inR} 0,${angleFlag},${1 - roundFlag} ${inSX},${-inSY}`);
+  res.push(`L${midSX},${-midSY}`);
   res.push(`Z`);
   return res.join(" ")
 };

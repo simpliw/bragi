@@ -66,22 +66,26 @@
       upScale: function () {
         var $this = this;
         var $plasmid = $this.plasmid;
-        $plasmid.reset('+1');
+        $plasmid.reset('+');
+        $this.scale = $plasmid.getScale();
       },
       downScale: function () {
         var $this = this;
         var $plasmid = $this.plasmid;
-        $plasmid.reset('-1');
+        $plasmid.reset('-');
+        $this.scale = $plasmid.getScale();
       },
       maxScale: function () {
         var $this = this;
         var $plasmid = $this.plasmid;
         $plasmid.reset('max');
+        $this.scale = $plasmid.getScale();
       },
       minScale: function () {
         var $this = this;
         var $plasmid = $this.plasmid;
         $plasmid.reset('min');
+        $this.scale = $plasmid.getScale();
       }
     },
     attached: function () {
@@ -90,8 +94,9 @@
     ready: function () {
       var $this = this;
 
-      $.ajax({url: this.gbff.pB039}).done(function (data) {
+      $.ajax({url: this.gbff.pB002}).done(function (data) {
         $this.plasmid = init(document.getElementById("gene"), {gbff: parse(data)})
+        $this.scale = $this.plasmid.getScale();
       });
 
       var box = document.getElementById("box");
@@ -111,7 +116,6 @@
       dragHandler.onStop = function () {
 
       };
-
     }
   }
 

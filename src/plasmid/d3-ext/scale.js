@@ -18,12 +18,12 @@ let angleY = function (angle) {
   return Math.cos(angle2radian(angle));
 };
 
-let geX = function (geLength, angle) {
-  return Math.sin(angle2radian(angle4ge(geLength) * angle + angle4ge(geLength) / 4));
+let geX = function (geLength, index) {
+  return Math.sin(angle2radian(angle4ge(geLength) * index + angle4ge(geLength) / 2));
 };
 
-let geY = function (geLength, angle) {
-  return Math.cos(angle2radian(angle4ge(geLength) * angle + angle4ge(geLength) / 4));
+let geY = function (geLength, index) {
+  return Math.cos(angle2radian(angle4ge(geLength) * index + angle4ge(geLength) / 2));
 };
 
 let xy4angle = function (angle, r = 1) {
@@ -42,7 +42,6 @@ let radian4ge = function (geLength) {
 };
 
 let r4ge = function (geLength, geWidth) {
-
   return geWidth * 180 / Math.PI / angle4ge(geLength);
 };
 
@@ -73,11 +72,21 @@ var scaleLinear = function (diameter, width) {
   return d3.scale.linear().domain([0, diameter]).range([0, width]);
 };
 
+var r4unitGE = function (geLength, unitGE, unitGE1 = 30) {
+  return (r4ge(geLength, unitGE1) * unitGE / unitGE1).toFixed(8);
+};
+
+var percent100 = function (per, sum) {
+  return per * 100 / sum;
+};
+
 export {
   xy4angle,
+  percent100,
   r4ge,angle4ge,
   geX,geY,
   radianLength4angle,
   radian4ge,angle4xy,
+  r4unitGE,
   scaleLinear
 };

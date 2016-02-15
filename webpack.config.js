@@ -5,7 +5,7 @@ var CommonsChunkPlugin = webpack.optimize.CommonsChunkPlugin;
 module.exports = {
   entry: {
     bragi: './src/bragi.js',
-    docs:  './src/docs.js'
+    docs: './src/docs.js'
   },
   output: {
     path: './bundle',
@@ -41,7 +41,9 @@ module.exports = {
   },
   externals: {
     "jquery": "jQuery",
-    "d3": "d3"
+    "d3": "d3",
+    "vue": "vue",
+    "vue-router": "vue-router"
   },
   plugins: [
     new ExtractTextPlugin('./[name].css'),

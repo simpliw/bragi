@@ -38,4 +38,8 @@ var col_ge = function (data) {
   }
 };
 
+var colorStore = function () {
+
+};
+
 export {col_ge}

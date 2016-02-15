@@ -32,9 +32,9 @@ exports.parse = (text) => {
         match = /^\s+(\S+)\s+(\S+)/.exec(line);
         let feature = {key: match[1], location: match[2], qualifier: {}};
         line = lines[lineno + 1];
+
         while (/^\s+\//.test(line)) {
           lineno++;
-
           var str = line.replace(/^\s+\//, '');
           match = /^([^=]+)=(\d+)$/.exec(str); // for integer values
           if (match === null) {

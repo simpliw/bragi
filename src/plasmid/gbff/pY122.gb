@@ -4,8 +4,8 @@ DEFINITION  pY122, pZD2-3_T21(+)T21(+)x3-72bp_mKate2-T2A-TALER12-4xTarget^FF6,
 ACCESSION   urn.local...1d9-5cvh5zl
 VERSION     urn.local...1d9-5cvh5zl
 KEYWORDS    .
-SOURCE      
-  ORGANISM  
+SOURCE
+  ORGANISM
             .
 FEATURES             Location/Qualifiers
      rep_origin      complement(207..826)
@@ -372,7 +372,7 @@ FEATURES             Location/Qualifiers
                      /organism="""AAV-CAGGS-EGFP Sequence"
                      /mol_type="""other DNA"
                      /label="Source_1"
-ORIGIN      
+ORIGIN
         1 ggccaacgcg cggggagagg cggtttgcgt attgggcgct cttccgcttc ctcgctcact
        61 gactcgctgc gctcggtcgt tcggctgcgg cgagcggtat cagctcactc aaaggcggta
       121 atacggttat ccacagaatc aggggataac gcaggaaaga acatgtgagc aaaaggccag
