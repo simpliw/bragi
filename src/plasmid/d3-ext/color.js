@@ -38,8 +38,15 @@ var col_ge = function (data) {
   }
 };
 
-var colorStore = function () {
+class ColorStore {
 
-};
+  constructor() {
+    this.color = d3.scale.category20();
+  }
 
-export {col_ge}
+  getColor(index) {
+    return d3.rgb(this.color(index));
+  }
+}
+
+export {col_ge,ColorStore}

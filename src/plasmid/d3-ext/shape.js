@@ -2,16 +2,20 @@
  * Created by bqxu on 16/2/2.
  */
 
-let {xy4angle}=require('./scale');
+let {xy4angle,angle4RadianLength}=require('./scale');
 var line = function (start = {}, end = {}) {
   let {x:startX=0,y:startY=0}=start;
   let {x:endX=0,y:endY=0}=end;
   return `M${startX} ${startY}L${endX} ${endY}Z`;
 };
 
-var ring = function (r, startAngle = 0, endAngle = 180, angle = 2, width = 5) {
+var ring = function (r, startAngle = 0, endAngle = 180, width = 5) {
   let outR = r + width;
   let inR = r - width;
+  let angle = angle4RadianLength(r, width);
+  if (startAngle > endAngle) {
+    angle = 0 - angle;
+  }
   let {x:outSX,y:outSY}=xy4angle(startAngle + angle, outR);
   let {x:outEX,y:outEY}=xy4angle(endAngle, outR);
   let {x:midSX,y:midSY}=xy4angle(startAngle, r);
@@ -29,7 +33,7 @@ var ring = function (r, startAngle = 0, endAngle = 180, angle = 2, width = 5) {
     if (startAngle - endAngle > 180) {
       angleFlag = 1;
     }
-    roundFlag=0;
+    roundFlag = 0;
   }
   res.push(`M${outSX} ${-outSY}`);
   res.push(`A${outR},${outR} 0,${angleFlag},${roundFlag} ${outEX},${-outEY}`);

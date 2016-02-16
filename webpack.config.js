@@ -41,9 +41,7 @@ module.exports = {
   },
   externals: {
     "jquery": "jQuery",
-    "d3": "d3",
-    "vue": "vue",
-    "vue-router": "vue-router"
+    "d3": "d3"
   },
   plugins: [
     new ExtractTextPlugin('./[name].css'),

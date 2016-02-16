@@ -3,7 +3,7 @@
  */
 require('./style.scss');
 let {Scope} =require("./core/scope");
-let {col_ge} =require("./d3-ext/color");
+let {col_ge,ColorStore} =require("./d3-ext/color");
 let {viewBox,appendSVG} =require("./d3-ext/layout");
 let {line,ring} =require("./d3-ext/shape");
 let {transition,scale,rotate,translate} =require("./d3-ext/transition");
@@ -24,6 +24,7 @@ var def = {
   scale: 1
 };
 
+let colorStore = new ColorStore()
 var init = (target, opts)=> {
   let svg, g, origin;
   let gbff, features;
@@ -104,7 +105,7 @@ let render = function (svg, g, origin, features, width) {
         index--;
         if (index < 0) index++;
       } else if (per == 'max') {
-        index = scales.length;
+        index = scales.length - 1;
       } else if (per == 'min') {
         index = 0;
       }
@@ -242,13 +243,13 @@ var renderFeatures = function (g, cX, cY, r, features, ol) {
         width = 0 - (Math.round(level / 2) * 16 - 10 + 4);
       }
       if (d.loc.complement == 'true') {
-        return ring(r - width, d.loc.endAngle, d.loc.startAngle, -angle)
+        return ring(r - width, d.loc.endAngle, d.loc.startAngle)
       } else {
-        return ring(r - width, d.loc.startAngle, d.loc.endAngle, angle)
+        return ring(r - width, d.loc.startAngle, d.loc.endAngle)
       }
     }
   }).style('fill', function (d) {
-    return 'grey';
+    return colorStore.getColor(d.key);
   })
 };
 

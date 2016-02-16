@@ -80,12 +80,17 @@ var percent100 = function (per, sum) {
   return per * 100 / sum;
 };
 
+var angle4RadianLength = function (r, length) {
+  return length * 180 / r / Math.PI
+};
+
 export {
   xy4angle,
   percent100,
   r4ge,angle4ge,
   geX,geY,
   radianLength4angle,
+  angle4RadianLength,
   radian4ge,angle4xy,
   r4unitGE,
   scaleLinear
