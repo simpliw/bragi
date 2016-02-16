@@ -24,7 +24,7 @@ var def = {
   scale: 1
 };
 
-let colorStore = new ColorStore()
+let colorStore = new ColorStore();
 var init = (target, opts)=> {
   let svg, g, origin;
   let gbff, features;
@@ -69,7 +69,9 @@ var init = (target, opts)=> {
 };
 
 let renderBuild = function (svg, g, scope, scale, circle, limit) {
-  g.attr("transform", translate(circle.translate().x, circle.translate().y)).attr("fill", '##efefef');
+  g.attr("transform", transition({
+    x: circle.translate().x, y: circle.translate().y
+  }, {}, {angle: -scope.angle})).attr("fill", '##efefef');
   g.html("");
   if (limit.level() == '1') {
     renderOrigin(g, circle.x, circle.y, circle.r, scope.origin);
