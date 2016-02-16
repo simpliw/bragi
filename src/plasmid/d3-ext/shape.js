@@ -45,5 +45,20 @@ var ring = function (r, startAngle = 0, endAngle = 180, width = 5) {
   return res.join(" ")
 };
 
-export {line,ring};
+
+var arc = function (r, startAngle = 0, endAngle = 180) {
+  let {x:sX,y:sY}=xy4angle(startAngle, r);
+  let {x:eX,y:eY}=xy4angle(endAngle, r);
+  let res = [];
+  let angleFlag = 0;
+  let roundFlag = 1;
+  if (endAngle - startAngle > 180) {
+    angleFlag = 1;
+    roundFlag = 0;
+  }
+  res.push(`M${sX} ${-sY}`);
+  res.push(`A${r},${r} 0,${angleFlag},${roundFlag} ${eX},${-eY}`);
+  return res.join(" ")
+};
+export {line,ring,arc};
 

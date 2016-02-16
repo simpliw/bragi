@@ -5,7 +5,7 @@ require('./style.scss');
 let {Scope} =require("./core/scope");
 let {col_ge,ColorStore} =require("./d3-ext/color");
 let {viewBox,appendSVG} =require("./d3-ext/layout");
-let {line,ring} =require("./d3-ext/shape");
+let {line,ring,arc} =require("./d3-ext/shape");
 let {transition,scale,rotate,translate} =require("./d3-ext/transition");
 let {
   r4ge,
@@ -15,7 +15,8 @@ let {
   angle4xy,
   xy4angle,
   scaleLinear,
-  percent100
+  percent100,
+  angle4RadianLength
   } =require("./d3-ext/scale");
 
 var def = {
@@ -25,7 +26,7 @@ var def = {
 };
 
 let colorStore = new ColorStore();
-var init = (target, opts)=> {
+let init = (target, opts)=> {
   let svg, g, origin;
   let gbff, features;
   let width = 500;
@@ -53,7 +54,8 @@ var init = (target, opts)=> {
     viewBox: viewBox(0, 0, width, width)
   });
   g = svg.append('g');
-  let plasmid = render(svg, g, origin, features, width);
+
+  let plasmid = render(svg, g, origin, features, width, opts.id, opts.gbff.name);
   return {
     reset: function (percent) {
       plasmid.scale(percent)
@@ -68,32 +70,39 @@ var init = (target, opts)=> {
   }
 };
 
-let renderBuild = function (svg, g, scope, scale, circle, limit) {
+let renderBuild = function (svg, g, scope, scale, circle, limit, name) {
   g.attr("transform", transition({
     x: circle.translate().x, y: circle.translate().y
   }, {}, {angle: -scope.angle})).attr("fill", '##efefef');
   g.html("");
+  let ng = g.append('g');
+  ng.attr("id", `name-${scope.id}`);
+  ng.append('text').text(name).classed('title', true);
+  ng.append('text').text(scope.origin.length + ' bp').attr('y', 10);
+
   if (limit.level() == '1') {
-    renderOrigin(g, circle.x, circle.y, circle.r, scope.origin);
+    renderOrigin(g, circle.x, circle.y, circle.r, scope.origin, scope.id);
   } else if (limit.level() == '2') {
-    renderColor(g, circle.x, circle.y, circle.r, scope.origin)
+    renderColor(g, circle.x, circle.y, circle.r, scope.origin, scope.id)
   } else {
-    renderLoop(g, circle.x, circle.y, circle.r, 10);
+    renderLoop(g, circle.x, circle.y, circle.r, 10, scope.id);
   }
-  renderFeatures(g, circle.x, circle.y, circle.r, scope.features, scope.origin.length);
-  renderLimit(g, circle.x, circle.y, limit.r, limit.du, scope.origin.length);
-  setLine(svg, g, scope, scale);
+  renderFeatures(g, circle.x, circle.y, circle.r, scope.features, scope.origin.length, scope.id);
+  renderLimit(g, circle.x, circle.y, limit.r, limit.du, scope.origin.length, scope.id);
+  setLine(svg, g, scope, scale, scope.id);
+  setFeatureLabel(g, scope)
 };
 
-let render = function (svg, g, origin, features, width) {
-  let scope = new Scope(origin, features, width, width);
+let render = function (svg, g, origin, features, width, id, name) {
+  let scope = new Scope(origin, features, width, width, id);
   scope.angle = 0;
   let $width = scope.r2;
   let scales = scope.scales;
   let scale = scope.scale(percent100($width, scope.r1));
   let circle = scale.circle;
   let limit = scale.limit;
-  renderBuild(svg, g, scope, scale, circle, limit);
+
+  renderBuild(svg, g, scope, scale, circle, limit, name);
   return {
     scale: function (per) {
       let index = scales.findIndex((x)=>x == $width);
@@ -115,7 +124,7 @@ let render = function (svg, g, origin, features, width) {
       scale = scope.scale(percent100($width, scope.r1));
       circle = scale.circle;
       limit = scale.limit;
-      renderBuild(svg, g, scope, scale, circle, limit);
+      renderBuild(svg, g, scope, scale, circle, limit, name);
     },
     transition: function (angle) {
       scope.angle = angle;
@@ -123,7 +132,10 @@ let render = function (svg, g, origin, features, width) {
         x: circle.translate().x, y: circle.translate().y
       }, {}, {
         angle: -angle
-      }))
+      }));
+      let ng = g.select(`#name-${scope.id}`);
+      ng.attr("transform", transition({}, {}, {angle: scope.angle})).attr("fill", '##efefef');
+      setFeatureLabel(g, scope);
     },
     getScale: function () {
       return percent100($width, scope.r1);
@@ -131,8 +143,9 @@ let render = function (svg, g, origin, features, width) {
   }
 };
 
-var setLine = function (svg, g, scope, scale) {
+let setLine = function (svg, g, scope, scale, id) {
   let ig = g.append('g');
+  ig.attr("id", `line-${id}`);
   let ol = scope.origin.length;
   let ang4ge = angle4ge(ol);
   let path = ig.append("path")
@@ -182,8 +195,9 @@ var setLine = function (svg, g, scope, scale) {
   })
 };
 
-let renderLoop = function (g, cX, cY, r, width) {
+let renderLoop = function (g, cX, cY, r, width, id) {
   g = g.append('g');
+  g.attr("id", `loop-${id}`);
   g.append("path")
     .attr('d', d3.svg.arc()
       .startAngle(0)
@@ -193,9 +207,10 @@ let renderLoop = function (g, cX, cY, r, width) {
     ).attr("fill", 'green');
 };
 
-var renderOrigin = function (g, cX, cY, r, origin) {
+let renderOrigin = function (g, cX, cY, r, origin, id) {
   let ol = origin.length;
   g = g.append('g');
+  g.attr("id", `origin-${id}`);
   g = g.selectAll("g").data(origin).enter().append('g');
   g.append('text').text(function (data) {
     return data.data;
@@ -210,10 +225,11 @@ var renderOrigin = function (g, cX, cY, r, origin) {
   }).style("font-size", '16px').style("font-weight", '500').attr({});
 };
 
-var renderColor = function (g, cX, cY, r, origin) {
+let renderColor = function (g, cX, cY, r, origin, id) {
   let ol = origin.length;
   let originRadian = radian4ge(ol);
   g = g.append('g');
+  g.attr("id", `color-${id}`);
   g = g.selectAll("g").data(origin).enter().append('g');
   g.append("path").attr('d', d3.svg.arc()
     .startAngle(function (data, index) {
@@ -233,9 +249,9 @@ var renderColor = function (g, cX, cY, r, origin) {
   });
 };
 
-var renderFeatures = function (g, cX, cY, r, features, ol) {
-  let angle = angle4ge(ol);
+let renderFeatures = function (g, cX, cY, r, features, ol, id) {
   g = g.append('g');
+  g.attr("id", `features-${id}`);
   g = g.selectAll("g").data(features).enter().append('g');
   g.append("path").attr('d', function (d) {
     if (d.loc != null) {
@@ -252,10 +268,103 @@ var renderFeatures = function (g, cX, cY, r, features, ol) {
     }
   }).style('fill', function (d) {
     return colorStore.getColor(d.key);
-  })
+  }).attr("id", function (d, index) {
+    return `features-${id}-${index}`;
+  });
+  g.append("defs").append("path")
+    .attr("id", function (d, index) {
+      return `defPath-${id}-${index}`;
+    });
+  g.append("text")
+    .style('fill', function (d) {
+      return colorStore.getColor(d.key);
+    }).attr("id", function (d, index) {
+      return `text-${id}-${index}`;
+    })
+    .append("textPath").text(function (d) {
+    return d.qualifier.label;
+  }).attr("id", function (d, index) {
+    return `textPath-${id}-${index}`;
+  }).attr("xlink:href", function (d, index) {
+    return `#defPath-${id}-${index}`;
+  });
+  g.append("path").attr("id", function (d, index) {
+    return `line-${id}-${index}`;
+  });
 };
 
-var renderLimit = function (g, cX, cY, r, limit, ol) {
+var setFeatureLabel = function (g, scope) {
+  let feature = g.select(`#features-${scope.id}`);
+  let viewFIndex = scope.viewFIndex();
+  let viewAngle = scope.viewAngle() / 2;
+  let angle = scope.angle;
+  let ol = scope.origin.length;
+  let geAngle = angle4ge(ol);
+  viewFIndex.forEach(function (fIndex) {
+    let fPath = feature.select(`#defPath-${scope.id}-${fIndex}`);
+    let fLine = feature.select(`#line-${scope.id}-${fIndex}`);
+    let fText = feature.select(`#text-${scope.id}-${fIndex}`);
+    fPath.attr("d", function (d) {
+      let startAngle = d.loc.startAngle;
+      let endAngle = d.loc.endAngle;
+      let level = d.loc.level;
+      let tLevel = d.loc.level2;
+      let fAngle = startAngle;
+      let tAngle = startAngle + tLevel * geAngle;
+      if (viewAngle < 180) {
+        if (startAngle < angle + viewAngle && angle - viewAngle < endAngle) {
+          if (startAngle > angle) {
+            fAngle = startAngle;
+            tAngle = startAngle + tLevel * geAngle;
+          } else if (endAngle < angle) {
+            fAngle = endAngle;
+            tAngle = endAngle - tLevel * geAngle;
+          } else {
+            fAngle = angle;
+            tAngle = angle + tLevel * geAngle;
+          }
+        } else if (startAngle > angle) {
+          fAngle = endAngle;
+          tAngle = endAngle - tLevel * geAngle;
+        }
+      } else {
+        fAngle = (startAngle + endAngle) / 2;
+        tAngle = (startAngle + endAngle) / 2 + tLevel * geAngle;
+      }
+      let fWidth = (Math.round(level / 2 + 1) * 16 + 10);
+      let tWidth = (Math.round(tLevel / 2 + 1) * 16 + Math.round(scope.level / 2 + 1) * 16);
+      let tWidth2 = (Math.round(tLevel / 2 + 1) * 16 + Math.round(scope.level / 2 + 1) * 16 - 6);
+      if (level % 2 == 1) {
+        fWidth = 0 - (Math.round(level / 2) * 16 );
+        tWidth = 0 - (Math.round(tLevel / 2) * 16 + Math.round(scope.level / 2 + 1) * 16);
+        tWidth2 = 0 - (Math.round(tLevel / 2) * 16 + Math.round(scope.level / 2 + 1) * 16 - 6);
+      }
+      let {x:fx,y:fy} = xy4angle(fAngle, scope.circle.r - fWidth);
+      let {x:tx2=0,y:ty2=0} = xy4angle(tAngle, scope.circle.r - tWidth2);
+      fLine.attr('stroke', function (d) {
+        return colorStore.getColor(d.key);
+      }).attr('d', function () {
+        return line({
+          x: fx,
+          y: -fy
+        }, {
+          x: tx2,
+          y: -ty2
+        })
+      }).attr("stroke-width", '2px');
+      let _length = `${d.qualifier.label}`.length;
+      fText.attr("x", 0)
+        .attr("y", _length * _length);
+      fText.classed("text-path", true);
+      let _a = angle4RadianLength(scope.circle.r - tWidth, _length * 12);
+      return arc(scope.circle.r - tWidth, tAngle, tAngle + _a);
+    });
+  })
+
+};
+
+
+let renderLimit = function (g, cX, cY, r, limit, ol, id) {
   let angle = angle4ge(ol);
   let li = [];
   let _limit = 0;
@@ -264,6 +373,7 @@ var renderLimit = function (g, cX, cY, r, limit, ol) {
     _limit += limit;
   }
   g = g.append('g');
+  g.attr("id", `limit-${id}`);
   g = g.selectAll("g").data(li).enter().append('g');
   g.append("path").attr('d', function (data) {
       return line({

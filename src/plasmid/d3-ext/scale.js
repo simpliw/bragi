@@ -8,7 +8,7 @@ let angle2radian = function (angle) {
 
 let radian2angle = function (radian) {
   return radian * 360 / 2 / Math.PI;
-}
+};
 
 let angleX = function (angle) {
   return Math.sin(angle2radian(angle));
@@ -84,6 +84,26 @@ var angle4RadianLength = function (r, length) {
   return length * 180 / r / Math.PI
 };
 
+var angle42angle = function (a, b) {
+  let c = Math.abs(a - b);
+  return c > 180 ? 360 - c : c;
+};
+
+var minAngle4angle2Feature = function (feature, angle) {
+  let angleA = (feature.loc.startAngle + feature.loc.endAngle) / 2;
+  let aArr = [];
+  aArr.push(angle42angle(angleA, angle));
+  aArr.push(angle42angle(feature.loc.startAngle, angle));
+  aArr.push(angle42angle(feature.loc.endAngle, angle));
+  aArr.sort(function (ia, ib) {
+    if (ia < ib) {
+      return -1
+    }
+    return 1;
+  });
+  return aArr[0];
+};
+
 export {
   xy4angle,
   percent100,
@@ -93,5 +113,8 @@ export {
   angle4RadianLength,
   radian4ge,angle4xy,
   r4unitGE,
-  scaleLinear
+  scaleLinear,
+  angle42angle,
+  radian2angle,
+  minAngle4angle2Feature
 };
