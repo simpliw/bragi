@@ -12,8 +12,11 @@ class Scope {
     this.origin = locOrigin(origin);
     this.features = features;
     this.width = width;
+    this.percent=100;
     this.height = height;
     this.angle = 0;
+    this.mouseAngle = 0;
+    this.events = {};
     this.id = id;
     let ol = this.origin.length;
     //case1:显示 origin ATCG  & features label
@@ -37,8 +40,9 @@ class Scope {
   }
 
   scale(percent) {
+    this.percent=percent;
     let ol = this.origin.length;
-    let unitGE = unitGE1 * percent / 100;
+    let unitGE = unitGE1 * this.percent / 100;
     let r = r4ge(ol, unitGE);
     let y = r + this.rwidth / 2;
     if (r < this.rwidth) {

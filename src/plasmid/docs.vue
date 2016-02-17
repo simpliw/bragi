@@ -95,7 +95,20 @@
       var $this = this;
 
       $.ajax({url: this.gbff.pB002}).done(function (data) {
-        $this.plasmid = init(document.getElementById("gene"), {gbff: parse(data)})
+        $this.plasmid = init(document.getElementById("gene"), {
+          gbff: parse(data),
+          event: {
+            mouseover: function () {
+
+            },
+            click: function () {
+              console.log(111);
+              console.log($this.plasmid.getAngle());
+              $("#box").css("left", $this.plasmid.getAngle() / 360 * $this.dragHandler.maxLeft);
+              $this.scale = $this.plasmid.getScale();
+            }
+          }
+        });
         $this.scale = $this.plasmid.getScale();
       });
 
@@ -116,6 +129,7 @@
       dragHandler.onStop = function () {
 
       };
+      $this.dragHandler = dragHandler;
     }
   }
 

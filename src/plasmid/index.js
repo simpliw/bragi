@@ -35,7 +35,9 @@ let init = (target, opts)=> {
   let _angle = 0;
 
   opts = Object.assign({}, def, opts);
-  opts.id = Math.ceil(Math.pow(10, 8) + 9 * Math.pow(10, 8) * Math.random());
+  if (!target.id) {
+    target.id = Math.ceil(Math.pow(10, 8) + 9 * Math.pow(10, 8) * Math.random());
+  }
   gbff = opts.gbff;
   if (!gbff) {
     return;
@@ -54,8 +56,7 @@ let init = (target, opts)=> {
     viewBox: viewBox(0, 0, width, width)
   });
   g = svg.append('g');
-
-  let plasmid = render(svg, g, origin, features, width, opts.id, opts.gbff.name);
+  let plasmid = render(svg, g, origin, features, width, target.id, opts.gbff.name, opts.event);
   return {
     reset: function (percent) {
       plasmid.scale(percent)
@@ -66,6 +67,9 @@ let init = (target, opts)=> {
     },
     getScale: function () {
       return plasmid.getScale();
+    },
+    getAngle: function () {
+      return plasmid.getAngle();
     }
   }
 };
@@ -79,7 +83,10 @@ let renderBuild = function (svg, g, scope, scale, circle, limit, name) {
   ng.attr("id", `name-${scope.id}`);
   ng.append('text').text(name).classed('title', true);
   ng.append('text').text(scope.origin.length + ' bp').attr('y', 10);
-
+  setLine(svg, g, scope, scale, scope.id);
+  renderFeatures(g, circle.x, circle.y, circle.r, scope.features, scope.origin.length, scope.id);
+  setFeatureLabel(g, scope);
+  renderLimit(g, circle.x, circle.y, limit.r, limit.du, scope.origin.length, scope.id);
   if (limit.level() == '1') {
     renderOrigin(g, circle.x, circle.y, circle.r, scope.origin, scope.id);
   } else if (limit.level() == '2') {
@@ -87,22 +94,15 @@ let renderBuild = function (svg, g, scope, scale, circle, limit, name) {
   } else {
     renderLoop(g, circle.x, circle.y, circle.r, 10, scope.id);
   }
-  renderFeatures(g, circle.x, circle.y, circle.r, scope.features, scope.origin.length, scope.id);
-  renderLimit(g, circle.x, circle.y, limit.r, limit.du, scope.origin.length, scope.id);
-  setLine(svg, g, scope, scale, scope.id);
-  setFeatureLabel(g, scope)
 };
 
-let render = function (svg, g, origin, features, width, id, name) {
+let render = function (svg, g, origin, features, width, id, name, events = {}) {
   let scope = new Scope(origin, features, width, width, id);
+  scope.events = events;
   scope.angle = 0;
-  let $width = scope.r2;
+  let $width = scope.rwidth;
   let scales = scope.scales;
-  let scale = scope.scale(percent100($width, scope.r1));
-  let circle = scale.circle;
-  let limit = scale.limit;
-
-  renderBuild(svg, g, scope, scale, circle, limit, name);
+  distRender(svg, g, scope, $width);
   return {
     scale: function (per) {
       let index = scales.findIndex((x)=>x == $width);
@@ -121,15 +121,12 @@ let render = function (svg, g, origin, features, width, id, name) {
         index = 0;
       }
       $width = scales[index];
-      scale = scope.scale(percent100($width, scope.r1));
-      circle = scale.circle;
-      limit = scale.limit;
-      renderBuild(svg, g, scope, scale, circle, limit, name);
+      distRender(svg, g, scope, $width)
     },
     transition: function (angle) {
       scope.angle = angle;
       g.attr("transform", transition({
-        x: circle.translate().x, y: circle.translate().y
+        x: scope.circle.translate().x, y: scope.circle.translate().y
       }, {}, {
         angle: -angle
       }));
@@ -138,9 +135,17 @@ let render = function (svg, g, origin, features, width, id, name) {
       setFeatureLabel(g, scope);
     },
     getScale: function () {
-      return percent100($width, scope.r1);
+      return scope.percent;
+    },
+    getAngle: function () {
+      return scope.angle;
     }
   }
+};
+
+var distRender = function (svg, g, scope, $width) {
+  let scale = scope.scale(percent100($width, scope.r1));
+  renderBuild(svg, g, scope, scale, scale.circle, scale.limit, name);
 };
 
 let setLine = function (svg, g, scope, scale, id) {
@@ -169,9 +174,11 @@ let setLine = function (svg, g, scope, scale, id) {
       })
     });
   svg.on('mousemove', function (event) {
-    let $x = d3.event.offsetX;
-    let $y = d3.event.offsetY;
+    let poi = d3.mouse(document.getElementById(scope.id));
+    let $x = poi[0];
+    let $y = poi[1];
     let angle = angle4xy(scale.circle.x, scale.circle.y, $x, $y);
+    scope.mouseAngle = angle;
     let index = Math.floor((angle + scope.angle) / ang4ge);
     let ang = index * ang4ge;
     let xy = xy4angle(ang, scale.limit.r + 35);
@@ -192,7 +199,26 @@ let setLine = function (svg, g, scope, scale, id) {
         angle: ang
       })
     });
-  })
+    scope.events.mousemove && scope.events.mousemove();
+  }, false);
+  let svgClick = 0;
+  let timeClick = null;
+  svg.on("click", function () {
+    if (timeClick) {
+      clearTimeout(timeClick);
+    }
+    timeClick = setTimeout(function () {
+      if (svgClick > 1) {
+        scope.angle = scope.mouseAngle + scope.angle;
+        scope.mouseAngle = 0;
+        distRender(svg, g, scope, scope.r1);
+        scope.events.click && scope.events.click();
+        timeClick = null;
+      }
+      svgClick = 0;
+    }, 500);
+    svgClick++;
+  });
 };
 
 let renderLoop = function (g, cX, cY, r, width, id) {
