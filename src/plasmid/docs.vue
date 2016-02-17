@@ -1,136 +1,90 @@
-<template xmlns:v-on="http://www.w3.org/1999/xhtml">
-  <h1>
-    Plasmid
-  </h1>
-  <div style="display: inline-block;width: 900px;margin: 0 auto">
-    <div style="display: inline-block;width: 550px">
-      <div class="scale" style="width: 550px;height: 40px;display: inline-block">
-        <input type="button" value="+" v-on:click="upScale">
-        <input type="button" value="-" v-on:click="downScale">
-        <input type="text" value="100" v-model="scale" readonly>%
-        <input type="button" value="max" v-on:click="maxScale">
-        <input type="button" value="min" v-on:click="minScale">
-      </div>
-      <div id="gene" style="width: 600px;height: 600px;display: inline-block">
+<template lang="jade">
+h1 Plasmid
 
-      </div>
-      <div id="scroll" style="display: inline-block;width: 600px;height: 10px;position: relative">
-        <div class="box" id="box" style="width: 10px;height: 10px;background: black" v-on:drag="scroll"
-             draggable="true"></div>
-      </div>
-    </div>
-    <div id="features" style="width: 300px;display: inline-block">
-      <ul>
-        <template v-for="feature in featureList">
-          <li>
+h2 使用方式
+h3 解析
+pre {{ pre.parser }}
+h3 渲染
+pre {{ pre.render }}
 
-          </li>
-        </template>
-      </ul>
-    </div>
-  </div>
-  <div id="origins" style="width: 900px;margin: 0 auto">
+h2 使用案例
+.am-g.am-margin-top
+  .am-u-md-6
+    h3 选择文件
+    select(v-model= "selected")
+      option(v-for="(k, v) in gbff", :value="v") {{ k }}
+    template(v-if="selected")
+      h3 解析结果
+      pre.am-pre-scrollable {{ parsed | json }}
+  .am-u-md-6(v-if="selected")
+    h3 渲染结果
+    span#plasmid
 
-  </div>
+h2 更多用例
+h3 #1 Features on the complement sequence
+span.plasmid(data-outerSize="400", :data-gbffUrl="gbff.pB039")
+span.plasmid(data-outerSize="400", :data-gbffUrl="gbff.pB039_F")
+h3 #2 Flexible view size
+span.plasmid(data-outerSize="200", :data-gbffUrl="gbff.pY108")
+span.plasmid(data-outerSize="300", :data-gbffUrl="gbff.pY108")
+span.plasmid(data-outerSize="400", :data-gbffUrl="gbff.pY108")
+h3 #3 Compatibility
+span.plasmid(data-outerSize="400", :data-gbffUrl="gbff.pHCKanP")
 </template>
-<style>
 
-</style>
-<script type="text/javascript">
-  let {init} = require('./index');
-  let {parse} = require('./core/parse');
-  let {Drag} = require('./core/drag');
-  let $ = require('jquery');
-  export default {
-    data: function () {
-      return {
-        gbff: {
-          pB002: require('file!./gbff/pB002.gb'),
-          pB039: require('file!./gbff/pB039.gb'),
-          pB039_F: require('file!./gbff/pB039_F.gb'),
-          pHCKanP: require('file!./gbff/pHCKanP.gb'),
-          pY001: require('file!./gbff/pY001.gb'),
-          pY108: require('file!./gbff/pY108.gb'),
-          pY122: require('file!./gbff/pY122.gb'),
-          pY157: require('file!./gbff/pY157.gb'),
-          pY178: require('file!./gbff/pY178.gb'),
-          pYB006: require('file!./gbff/pYB006.gb'),
-          pZ531: require('file!./gbff/pZ531.gb')
-        },
-        scale: this.scale,
-        plasmid: this.plasmid
-      };
-    },
-    computed: {},
-    methods: {
-      upScale: function () {
-        var $this = this;
-        var $plasmid = $this.plasmid;
-        $plasmid.reset('+');
-        $this.scale = $plasmid.getScale();
+<script>
+require('./jquery.js');
+
+export default {
+  data: function() {
+    return {
+      pre: {
+        parser: `$.ajax({ url: GBFF_URL }).done(function(data) { console.log($.Plasmid.parse(data)); })`,
+        render: `$('#plasmid').Plasmid({ gbffUrl: GBFF_URL })`
       },
-      downScale: function () {
-        var $this = this;
-        var $plasmid = $this.plasmid;
-        $plasmid.reset('-');
-        $this.scale = $plasmid.getScale();
+      gbff: {
+        pB002: require('file!./gbff/pB002.gb'),
+        pB039: require('file!./gbff/pB039.gb'),
+        pB039_F: require('file!./gbff/pB039_F.gb'),
+        pHCKanP: require('file!./gbff/pHCKanP.gb'),
+        pY001: require('file!./gbff/pY001.gb'),
+        pY108: require('file!./gbff/pY108.gb'),
+        pY122: require('file!./gbff/pY122.gb'),
+        pY157: require('file!./gbff/pY157.gb'),
+        pY178: require('file!./gbff/pY178.gb'),
+        pYB006: require('file!./gbff/pYB006.gb'),
+        pZ531: require('file!./gbff/pZ531.gb')
       },
-      maxScale: function () {
-        var $this = this;
-        var $plasmid = $this.plasmid;
-        $plasmid.reset('max');
-        $this.scale = $plasmid.getScale();
-      },
-      minScale: function () {
-        var $this = this;
-        var $plasmid = $this.plasmid;
-        $plasmid.reset('min');
-        $this.scale = $plasmid.getScale();
-      }
-    },
-    attached: function () {
-
-    },
-    ready: function () {
-      var $this = this;
-
-      $.ajax({url: this.gbff.pB002}).done(function (data) {
-        $this.plasmid = init(document.getElementById("gene"), {
-          gbff: parse(data),
-          event: {
-            mouseover: function () {
-
-            },
-            click: function () {
-              console.log(111);
-              console.log($this.plasmid.getAngle());
-              $("#box").css("left", $this.plasmid.getAngle() / 360 * $this.dragHandler.maxLeft);
-              $this.scale = $this.plasmid.getScale();
-            }
-          }
-        });
-        $this.scale = $this.plasmid.getScale();
-      });
-
-      var box = document.getElementById("box");
-      var scroll = document.getElementById("scroll");
-      var dragHandler = new Drag(box, {limit: true, lockY: true, maxContainer: scroll});
-      //开始拖拽时方法
-      dragHandler.onStart = function () {
-      };
-
-      //开始拖拽时方法
-      dragHandler.onMove = function () {
-        var $plasmid = $this.plasmid;
-        $plasmid.transition(this.drag.offsetLeft / this.maxLeft * 360);
-      };
-
-      //开始拖拽时方法
-      dragHandler.onStop = function () {
-
-      };
-      $this.dragHandler = dragHandler;
+      selected: null,
+      selected_data: null
+    };
+  },
+  computed: {
+    parsed: function() {
+      return this.selected_data ? $.Plasmid.parse(this.selected_data) : '';
     }
-  }
+  },
+  watch: {
+   selected: function(val) {
+     var self = this;
+     if (val) {
+       $.ajax({ url: val }).done(function(data) { self.selected_data = data; })
+       $('#plasmid').Plasmid({ gbffUrl: val });
+     } else {
+        self.selected_data = null;
+     }
+   },
+ },
+ attached: function() {
+   $(document).ready(function() {
+     $('pre').each(function(i, block) {
+       hljs.highlightBlock(block);
+     });
+   });
 
+   $('span.plasmid').each(function() {
+     $(this).Plasmid({ outerSize: $(this).attr('data-outerSize'), gbffUrl: $(this).attr('data-gbffUrl') });
+   });
+ }
+}
 </script>

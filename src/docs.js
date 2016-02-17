@@ -1,6 +1,6 @@
 /*
-  Bragi Docs
-*/
+ Bragi Docs
+ */
 var Vue = require('vue');
 var Router = require('vue-router');
 
@@ -16,6 +16,9 @@ router.map({
   },
   '/plasmid': {
     component: require('./plasmid/docs.vue')
+  },
+  '/plasmid-dev': {
+    component: require('./plasmid/dev.vue')
   },
   '/status-progressbar': {
     component: require('./status-progressbar/docs.vue')

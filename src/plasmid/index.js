@@ -20,43 +20,42 @@ let {
   } =require("./d3-ext/scale");
 
 var def = {
-  outerSize: 500,
-  innerSize: 500,
-  scale: 1
+  outerSize: 375,
+  innerSize: 375,
+  _percent: 100
 };
 
 let colorStore = new ColorStore();
 let init = (target, opts)=> {
   let svg, g, origin;
   let gbff, features;
-  let width = 500;
-  let height = 500;
-  let _percent = 100;
   let _angle = 0;
-
   opts = Object.assign({}, def, opts);
-  if (!target.id) {
-    target.id = Math.ceil(Math.pow(10, 8) + 9 * Math.pow(10, 8) * Math.random());
-  }
+  let width = opts.outerSize;
+  let height = opts.outerSize;
+
   gbff = opts.gbff;
   if (!gbff) {
     return;
   }
   origin = Array.from(gbff.origin);
   features = Array.from(gbff.features);
-  let className = target.className;
+  var svgDiv = document.createElement('div');
+  target.appendChild(svgDiv);
+  svgDiv.id = Math.ceil(Math.pow(10, 8) + 9 * Math.pow(10, 8) * Math.random());
+  let className = svgDiv.className;
   className = className ? className.split(" ") : [];
   if (!className.find((n) => n == 'plasmid')) {
     className.push('plasmid');
-    target.className = className.filter(x => true).join(' ');
+    svgDiv.className = className.filter(x => true).join(' ');
   }
-  svg = appendSVG(d3.select(target), {
+  svg = appendSVG(d3.select(svgDiv), {
     width: width,
     height: height,
     viewBox: viewBox(0, 0, width, width)
   });
   g = svg.append('g');
-  let plasmid = render(svg, g, origin, features, width, target.id, opts.gbff.name, opts.event);
+  let plasmid = render(svg, g, origin, features, width, svgDiv.id, opts.gbff.name, opts.event);
   return {
     reset: function (percent) {
       plasmid.scale(percent)
@@ -83,7 +82,6 @@ let renderBuild = function (svg, g, scope, scale, circle, limit, name) {
   ng.attr("id", `name-${scope.id}`);
   ng.append('text').text(name).classed('title', true);
   ng.append('text').text(scope.origin.length + ' bp').attr('y', 10);
-  setLine(svg, g, scope, scale, scope.id);
   renderFeatures(g, circle.x, circle.y, circle.r, scope.features, scope.origin.length, scope.id);
   setFeatureLabel(g, scope);
   renderLimit(g, circle.x, circle.y, limit.r, limit.du, scope.origin.length, scope.id);
@@ -94,6 +92,7 @@ let renderBuild = function (svg, g, scope, scale, circle, limit, name) {
   } else {
     renderLoop(g, circle.x, circle.y, circle.r, 10, scope.id);
   }
+  setLine(svg, g, scope, scale, scope.id);
 };
 
 let render = function (svg, g, origin, features, width, id, name, events = {}) {
@@ -353,9 +352,6 @@ var setFeatureLabel = function (g, scope) {
           fAngle = endAngle;
           tAngle = endAngle - tLevel * geAngle;
         }
-      } else {
-        fAngle = (startAngle + endAngle) / 2;
-        tAngle = (startAngle + endAngle) / 2 + tLevel * geAngle;
       }
       let fWidth = (Math.round(level / 2 + 1) * 16 + 10);
       let tWidth = (Math.round(tLevel / 2 + 1) * 16 + Math.round(scope.level / 2 + 1) * 16);

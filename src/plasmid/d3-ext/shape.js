@@ -10,6 +10,9 @@ var line = function (start = {}, end = {}) {
 };
 
 var ring = function (r, startAngle = 0, endAngle = 180, width = 5) {
+  if (!r) {
+    return
+  }
   let outR = r + width;
   let inR = r - width;
   let angle = angle4RadianLength(r, width);
@@ -47,6 +50,9 @@ var ring = function (r, startAngle = 0, endAngle = 180, width = 5) {
 
 
 var arc = function (r, startAngle = 0, endAngle = 180) {
+  if (!r) {
+    return
+  }
   let {x:sX,y:sY}=xy4angle(startAngle, r);
   let {x:eX,y:eY}=xy4angle(endAngle, r);
   let res = [];

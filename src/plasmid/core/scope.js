@@ -12,7 +12,7 @@ class Scope {
     this.origin = locOrigin(origin);
     this.features = features;
     this.width = width;
-    this.percent=100;
+    this.percent = 100;
     this.height = height;
     this.angle = 0;
     this.mouseAngle = 0;
@@ -40,12 +40,12 @@ class Scope {
   }
 
   scale(percent) {
-    this.percent=percent;
+    this.percent = percent;
     let ol = this.origin.length;
     let unitGE = unitGE1 * this.percent / 100;
     let r = r4ge(ol, unitGE);
     let y = r + this.rwidth / 2;
-    if (r < this.rwidth) {
+    if (r < this.rwidth + 1) {
       y = this.rwidth;
       r = y;
     }
@@ -64,6 +64,43 @@ class Scope {
         }
       }
     };
+    let ft = [];
+    let levelMax = this.level;
+    let cr = this.circle.r;
+    this.features.forEach(function (d) {
+      if (d.loc) {
+        let ftl = ft.length;
+        let used = [];
+        while (ftl--) {
+          let feature = ft[ftl];
+          if (d.loc.level % 2 != feature.loc.level % 2) {
+            continue;
+          }
+          let _labelLength = `${feature.qualifier.label}`.length;
+          let tlevel = feature.loc.level2;
+          let tWidth = (Math.round(tlevel / 2 + 1) * 16 + Math.round(levelMax / 2 + 1) * 16 - 6);
+          if (d.loc.level % 2 == 1) {
+            tWidth = 0 - (Math.round(tlevel / 2) * 16 + Math.round(levelMax / 2 + 1) * 16 - 6);
+          }
+          let ta = angle4RadianLength(cr + tWidth, _labelLength * 12);
+          if (d.loc.startAngle >= feature.loc.startAngle && d.loc.startAngle <= feature.loc.startAngle + 2 * ta) {
+            used.push(tlevel)
+          }
+        }
+        used.sort((a, b)=>a > b);
+        let tl = d.loc.level % 2;
+        if (tl == used[0]) {
+          for (var i = 0; i < used.length; i++) {
+            if (used[i] != tl) {
+              break;
+            }
+            tl = used[i] + 2;
+          }
+        }
+        d.loc.level2 = tl;
+        ft.push(d);
+      }
+    });
     return this;
   }
 
@@ -145,7 +182,6 @@ var locFeatures = function (features, length, r2) {
     var match = /(\d+)\.\.(\d+)/.exec(d.location.replace(/[<>]/g, ''));
     if (match) {
       d.loc = {start: Number(match[1]), end: Number(match[2])};
-
       d.loc.length = d.loc.end - d.loc.start + 1;
       if (/^complement/.test(d.location)) {
         d.loc.complement = "true";
@@ -156,15 +192,11 @@ var locFeatures = function (features, length, r2) {
       if (d.qualifier.label === undefined && d.qualifier.note !== undefined) {
         d.qualifier.label = d.qualifier.note;
       }
-      let labelLength = `${d.qualifier.label}`.length;
-      let ta = angle4RadianLength(r2, labelLength * 12);
       let ftl = ft.length;
       let fl = 0;
-      let tl = 0;
       while (ftl--) {
         let feature = ft[ftl];
         let flevel = feature.loc.level;
-        let tlevel = feature.loc.level2;
         if (d.loc.start >= feature.loc.start && d.loc.start <= feature.loc.end) {
           if (flevel >= fl) {
             fl = flevel + 1;
@@ -174,26 +206,17 @@ var locFeatures = function (features, length, r2) {
             fl = flevel + 1;
           }
         }
-        if (d.loc.start - ta >= feature.loc.start && d.loc.start - ta <= feature.loc.end) {
-          if (tlevel >= fl) {
-            tl = tlevel + 1;
-          }
-        } else if (d.loc.end + ta >= feature.loc.start && d.loc.end <= feature.loc.end + ta) {
-          if (tlevel >= fl) {
-            tl = tlevel + 1;
-          }
-        }
       }
       if (fl >= levelMax) {
         levelMax = fl;
       }
       d.loc.level = fl;
-      d.loc.level2 = tl;
       ft.push(d);
     } else {
       d.loc = null;
     }
   });
+
   return levelMax;
 };
 
