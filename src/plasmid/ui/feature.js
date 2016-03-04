@@ -4,12 +4,11 @@
 let {line,ring} =require("../d3-ext/shape");
 
 export class Feature {
-  constructor(svg, g, scope) {
-    this.svg = svg;
+  constructor(scope) {
     this.scope = scope;
     let {features,id,circle:{r}} = this.scope;
-    this.g = g.append('g').attr("id", `features-${id}`);
-    g = this.g.selectAll("g").data(features).enter().append('g');
+    this.g = scope.getDrawGroup().append('g').attr("id", `features-${id}`);
+    let g = this.g.selectAll("g").data(features).enter().append('g');
     g.append("path").attr("id", function (d, index) {
       return `features-${id}-${index}`;
     }).attr('d', (d) => {

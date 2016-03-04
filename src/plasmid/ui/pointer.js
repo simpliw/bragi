@@ -11,13 +11,11 @@ let {transition,rotate,translate} =require("../d3-ext/transition");
 let {PointerLine} =require('../d3-ext/event');
 
 export class Pointer {
-  constructor(_svg, _g, scope) {
-    this.$svg = _svg;
-    this.$scope = scope;
-    let {id,circle,origin:{length:ol}} = this.$scope;
+  constructor(scope) {
+    let {id,circle,origin:{length:ol}} = scope;
     let ang4ge = angle4ge(ol);
     let r = (circle.r - (Math.ceil(scope.level / 2) + 3) * 20);
-    this.$g = _g.append('g').attr("id", `line-${id}`)
+    this.$g = scope.getDrawGroup().append('g').attr("id", `line-${id}`)
       .attr("transform", function () {
         return translate(
           0,

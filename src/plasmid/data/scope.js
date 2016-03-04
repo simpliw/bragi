@@ -1,7 +1,7 @@
 /**
  * Created by bqxu on 16/2/5.
  */
-let {r4ge,r4unitGE,radian2angle,angle4RadianLength,minAngle4angle2Feature} =require("../d3-ext/scale");
+let {r4ge,r4unitGE,radian2angle,angle4RadianLength,minAngle4angle2Feature,unitGE4r} =require("../d3-ext/scale");
 let unitGE1 = 30;
 let unitGE2 = 12;
 let unitGE3 = 3;
@@ -26,22 +26,23 @@ export class Scope {
     let scales = [this.r1, r4unitGE(this.ol, unitGE2), this.r2, this.rwidth];
     this.scales = scales.sort((a, b) => a - b);
     this.colorStore = null;
+    this.Liner = d3.scale.linear()
+      .domain([1, 50, 85, 100])
+      .range(scales);
   }
 
   set gbff(gbff) {
     let {features=[],origin='',name}=gbff;
-    this.origin = origin;
-    this.features = features;
-
+    this.origin = Array.from(origin);
+    this.features = Array.from(features);
     this.name = name;
     this.ol = origin.length;
   }
 
   scale(percent) {
     this.percent = percent;
-    let ol = this.origin.length;
-    let unitGE = unitGE1 * this.percent / 100;
-    let r = r4ge(ol, unitGE);
+    let r = this.Liner(percent);
+    let unitGE = unitGE4r(r, this.origin.length);
     let y = r + this.rwidth / 2;
     if (r < this.rwidth + 1) {
       y = this.rwidth;
@@ -49,9 +50,10 @@ export class Scope {
     }
     this.distWidth = r;
     this.circle = new Circle(this.width / 2, y, r - Math.ceil(this.level / 2 + 5) * 10);
+    let scales = this.scales;
     this.limit = {
       r: r - 5 * 10,
-      du: Math.floor((5 * 100 / percent) / 5) * 5,
+      du: Math.floor((5 * this.Liner(100) / this.Liner(percent)) / 5) * 5,
       level: function () {
         let _unitGE = Math.round(unitGE);
         if (_unitGE < unitGE3) {
@@ -156,6 +158,22 @@ export class Scope {
       return 1;
     });
     return rIndex;
+  }
+
+  getSvg() {
+    return d3.select(`#svg-${this.id}`);
+  };
+
+  getDrawGroup() {
+    return d3.select(`#dg-${this.id}`);
+  };
+
+  getOptionGroup() {
+    return d3.select(`#og-${this.id}`);
+  };
+
+  getLoopGroup() {
+    return d3.select(`#loop-${this.id}`);
   }
 }
 

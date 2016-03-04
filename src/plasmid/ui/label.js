@@ -10,12 +10,10 @@ let {
 
 export class Label {
 
-  constructor(svg, g, scope) {
-    this.svg = svg;
-    this.g = g;
+  constructor(scope) {
     this.scope = scope;
     let {angle,origin,colorStore}=this.scope;
-    let feature = g.select(`#features-${scope.id}`);
+    let feature = scope.getDrawGroup().select(`#features-${scope.id}`);
     let ol = origin.length;
     let geAngle = angle4ge(ol);
     let $this = this;

@@ -55,12 +55,20 @@ export class Plasmid {
       height: this.getScope().height,
       viewBox: viewBox(0, 0, this.getScope().width, this.getScope().height)
     });
-    this.render(this.svg, this.getDrawGroup(), this.getScope());
-    this.$button = new Button(this.svg, this.getScope());
+    this.render(this.svg, this.getDrawGroup(), this.getScope(), 1);
+    this.$button = new Button(this.getScope());
     let $this = this;
 
-    this.$button.onZoom(function (_zoom) {
-
+    let zoomTimer = null;
+    this.$button.onZoom(function (scale, r) {
+      if (zoomTimer != null) {
+        clearTimeout(zoomTimer);
+        zoomTimer = null;
+      }
+      zoomTimer = setTimeout(function () {
+        $this.render($this.svg, $this.getDrawGroup(), $this.getScope(), scale)
+        zoomTimer = null;
+      }, 500)
     });
 
     this.$button.onFull(() => {
@@ -79,10 +87,6 @@ export class Plasmid {
       }, {}, {angle: -angle}));
       d3.select(`#name-${id}`).attr("transform", rotate(angle));
     });
-
-    this.$button.onZoom((_pre) => {
-
-    })
   };
 
   saveScope(scope) {
@@ -105,9 +109,12 @@ export class Plasmid {
     return d3.select(`#og-${this.scope.id}`);
   }
 
-  render(svg, g) {
-    let scope = this.scope;
-    scope.scale(percent100(scope.distWidth, scope.r1));
+  getLimitGroup() {
+    return d3.select(`#limit-${this.scope.id}`);
+  }
+
+  render(svg, g, scope, scale) {
+    scope.scale(scale);
     let {id,name,angle,origin:{length},circle,limit}=this.scope;
     g.attr("transform", transition({
       x: circle.translate().x, y: circle.translate().y
@@ -117,11 +124,11 @@ export class Plasmid {
     ng.attr("id", `name-${id}`);
     ng.append('text').text(name).classed('title', true);
     ng.append('text').text(length + ' bp').attr('y', 10);
-    this.$feature = new Feature(svg, g, scope);
-    this.$label = new Label(svg, g, scope);
-    this.$calibration = new Calibration(svg, g, scope);
-    this.$loop = new Loop(svg, g, scope);
-    this.$pointer = new Pointer(svg, g, scope);
+    this.$feature = new Feature(scope);
+    this.$label = new Label(scope);
+    this.$calibration = new Calibration(scope);
+    this.$loop = new Loop(scope);
+    this.$pointer = new Pointer(scope);
     this.$pointer.mouseMove(function () {
 
     });

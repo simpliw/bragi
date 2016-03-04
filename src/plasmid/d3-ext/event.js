@@ -8,7 +8,7 @@ export class AngleLine {
 
   constructor(inner, {
     warp,
-    container,
+    container
     }) {
     let drag = d3.behavior.drag();
     drag.on('drag', (d)=> {
@@ -39,8 +39,10 @@ export class ZoomLine {
   constructor(inner, {
     warp,
     container,
+    scope
     }) {
     let drag = d3.behavior.drag();
+    let zoom = d3.behavior.zoom();
     drag.on('drag', (d)=> {
       let height = warp.attr('height');
       let y = d3.event.y;
@@ -48,21 +50,38 @@ export class ZoomLine {
       if (y < 0) {
         y = 0
       }
-
       if (y > height - top) {
         y = height - top;
       }
-
-      inner.attr("transform", function () {
-        return translate(0, y);
-      });
-      this.moveYHandler && this.moveYHandler(100 * y / (height - top));
+      zoom.scale(100 * y / (height - top));
     });
     inner.call(drag);
+
+    let $this = this;
+    zoom.scaleExtent([1, 100])
+      .on('zoom', function () {
+        let scale = d3.event.scale;
+        scale = parseInt(scale);
+        if (scope.zoomScale == scale) {
+          return;
+        }
+        scope.zoomScale = scale;
+        let height = warp.attr('height');
+        let top = inner.attr("height");
+        let y = height - top;
+        let sy = scope.Liner(scale);
+        inner.attr("transform", function () {
+          this.setCapture && this.setCapture();
+          return translate(0, scale * y / 100);
+        });
+        $this.zoomHandler && $this.zoomHandler(scale, sy);
+      });
+
+    container.call(zoom);
   }
 
-  onMoveY(moveYHandler) {
-    this.moveYHandler = moveYHandler;
+  onZoom(zoomHandler) {
+    this.zoomHandler = zoomHandler;
   }
 }
 
@@ -106,9 +125,3 @@ export class PointerLine {
   }
 }
 
-
-export class ZoomArea {
-  constructor() {
-
-  }
-}

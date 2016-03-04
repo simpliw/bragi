@@ -73,10 +73,14 @@ export let scaleLinear = (diameter, width) => {
 };
 
 export let r4unitGE = (geLength, unitGE, unitGE1 = 30)=> {
-  return (r4ge(geLength, unitGE1) * unitGE / unitGE1).toFixed(8);
+  return parseFloat((r4ge(geLength, unitGE1) * unitGE / unitGE1).toFixed(8));
 };
 
-export let percent100 = (per, sum)=> {
+export let unitGE4r = (r, geLength) => {
+  return parseFloat((2 * Math.PI * r / geLength).toFixed(8));
+};
+
+export let percent100 = (per = 100, sum = 100)=> {
   return per * 100 / sum;
 };
 

@@ -1,17 +1,16 @@
 /**
  * Created by bqxu on 16/3/3.
  */
-let {AngleLine,ZoomLine,ZoomArea} =require("../d3-ext/event");
+let {AngleLine,ZoomLine} =require("../d3-ext/event");
 let {transition,translate,rotate} =require("../d3-ext/transition");
 let {appendRect} =require("../d3-ext/element");
 
 export class Button {
 
-  constructor(svg, scope) {
-    this.svg = svg;
+  constructor(scope) {
     this.scope = scope;
     let {id,width,height}=this.scope;
-    this.g = this.svg.append('g').attr("id", `og-${id}`)
+    this.g = scope.getSvg().append('g').attr("id", `og-${id}`)
       .attr("transform", translate(width / 2, height / 2)).attr("fill", '##efefef')
       .html('');
     this.zoom();
@@ -20,7 +19,8 @@ export class Button {
   }
 
   zoom() {
-    let {width,height}=this.scope;
+    let scope = this.scope;
+    let {width,height}=scope;
     let g_zoom = this.g.append('g').attr("transform", translate(-width / 2 + 10, -height / 2 + 10)).classed("rotate_warp", true);
     let zoom_warp = appendRect(g_zoom, {
       x: 4,
@@ -40,17 +40,14 @@ export class Button {
 
     let zoomLine = new ZoomLine(zoom_inner, {
       warp: zoom_warp,
-      container: this.svg
+      container: scope.getSvg(),
+      scope: this.scope
     });
 
-    let zoomarea = new ZoomArea(zoom_inner, {
-      warp: zoom_warp,
-      container: this.svg
-    });
+    let $this = this;
 
-
-    zoomLine.onMoveY((angle) => {
-      this.zoomHandler && this.zoomHandler(angle);
+    zoomLine.onZoom((scale, r) => {
+      $this.zoomHandler && $this.zoomHandler(scale, r);
     });
   }
 

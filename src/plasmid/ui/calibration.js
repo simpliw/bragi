@@ -10,9 +10,7 @@ let {transition} =require("../d3-ext/transition");
 
 export class Calibration {
 
-  constructor(svg, g, scope) {
-    this.svg = svg;
-    this.g = g;
+  constructor(scope) {
     this.scope = scope;
     let id = scope.id;
     let ol = scope.origin.length;
@@ -25,8 +23,7 @@ export class Calibration {
       li.push(_limit);
       _limit += du;
     }
-    this.g = g.append('g').attr("id", `limit-${id}`);
-    g = this.g.selectAll("g").data(li).enter().append('g');
+    let g = scope.getDrawGroup().append('g').attr("id", `limit-${id}`).selectAll("g").data(li).enter().append('g');
     g.append("path").attr('d', function (data) {
         return line({
           x: r * Math.cos(( data * angle - 90) / 180 * Math.PI),
