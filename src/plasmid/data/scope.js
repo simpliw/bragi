@@ -6,37 +6,35 @@ let unitGE1 = 30;
 let unitGE2 = 12;
 let unitGE3 = 3;
 
-class Scope {
+export class Scope {
 
-  constructor(origin, features, width, height, id) {
-    this.origin = locOrigin(origin);
-    this.features = features;
+  constructor(width, height, gbff = {}, id) {
     this.width = width;
-    this.percent = 100;
     this.height = height;
+    this.gbff = gbff;
+    this.id = id;
+    this.showR = Math.min(this.width, this.height);
+    this.percent = 100;
     this.angle = 0;
     this.mouseAngle = 0;
-    this.events = {};
-    this.id = id;
-    let ol = this.origin.length;
-    //case1:显示 origin ATCG  & features label
-    //case2:显示 origin color & features label
-    //case2:show origin & no label
-    //origin 一个环
-
-    //unitGE=3;     font 8
-    //unitGE=18;    font 16
-    //unitGE=30;    font 16
-    //500 width
-    //200ge       100%
-    //200ge       33%
-    //20ge        10%
-    this.rwidth = width / 2;
-    this.r1 = r4unitGE(ol, unitGE1);
-    this.r2 = r4unitGE(ol, unitGE3);
-    this.level = locFeatures(this.features, ol, this.rwidth);
-    let scales = [this.r1, r4unitGE(ol, unitGE2), this.r2, this.rwidth];
+    this.lineWidth = 10;
+    this.rwidth = this.showR / 2;
+    this.distWidth = this.rwidth;
+    this.r1 = r4unitGE(this.ol, unitGE1);
+    this.r2 = r4unitGE(this.ol, unitGE3);
+    this.level = locFeatures(this.features, this.ol, this.rwidth);
+    let scales = [this.r1, r4unitGE(this.ol, unitGE2), this.r2, this.rwidth];
     this.scales = scales.sort((a, b) => a - b);
+    this.colorStore = null;
+  }
+
+  set gbff(gbff) {
+    let {features=[],origin='',name}=gbff;
+    this.origin = origin;
+    this.features = features;
+
+    this.name = name;
+    this.ol = origin.length;
   }
 
   scale(percent) {
@@ -49,6 +47,7 @@ class Scope {
       y = this.rwidth;
       r = y;
     }
+    this.distWidth = r;
     this.circle = new Circle(this.width / 2, y, r - Math.ceil(this.level / 2 + 5) * 10);
     this.limit = {
       r: r - 5 * 10,
@@ -87,7 +86,7 @@ class Scope {
             used.push(tlevel)
           }
         }
-        used.sort((a, b)=>a > b);
+        used.sort((a, b) => a > b);
         let tl = d.loc.level % 2;
         if (tl == used[0]) {
           for (var i = 0; i < used.length; i++) {
@@ -230,5 +229,3 @@ var locOrigin = function (origin) {
   });
   return res;
 };
-
-export {Scope}

@@ -1,8 +1,8 @@
 /**
  * Created by bqxu on 16/2/17.
  */
-let main = require('./index.js');
-let {parse} = require('./core/parse.js');
+let {Plasmid} = require('./index.js');
+let {parse} = require('./data/parse.js');
 (function ($) {
   // Extend jQuery
   $.Plasmid = {
@@ -20,10 +20,10 @@ let {parse} = require('./core/parse.js');
     // Get gbff by AJAX
     if (opts.gbffUrl) $.ajax({url: opts.gbffUrl}).done(function (data) {
       opts.gbff = $.Plasmid.parse(data);
-      main.init(self[0], opts)
+      Plasmid(self[0], opts)
     });
     // Render SVG
-    main.init(self[0], opts)
+    Plasmid(self[0], opts)
   };
 
 })(require('jquery'));

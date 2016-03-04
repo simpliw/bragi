@@ -3,13 +3,13 @@
  */
 
 let {xy4angle,angle4RadianLength}=require('./scale');
-var line = function (start = {}, end = {}) {
+export let line = (start = {}, end = {}) => {
   let {x:startX=0,y:startY=0}=start;
   let {x:endX=0,y:endY=0}=end;
   return `M${startX} ${startY}L${endX} ${endY}Z`;
 };
 
-var ring = function (r, startAngle = 0, endAngle = 180, width = 5) {
+export let ring = (r, startAngle = 0, endAngle = 180, width = 5) => {
   if (!r) {
     return
   }
@@ -49,7 +49,7 @@ var ring = function (r, startAngle = 0, endAngle = 180, width = 5) {
 };
 
 
-var arc = function (r, startAngle = 0, endAngle = 180) {
+export let arc = (r, startAngle = 0, endAngle = 180) => {
   if (!r) {
     return
   }
@@ -66,5 +66,3 @@ var arc = function (r, startAngle = 0, endAngle = 180) {
   res.push(`A${r},${r} 0,${angleFlag},${roundFlag} ${eX},${-eY}`);
   return res.join(" ")
 };
-export {line,ring,arc};
-

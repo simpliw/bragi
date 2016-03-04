@@ -5,14 +5,46 @@
   dominant-baseline: middle;
 }
 
-
 .plasmid svg text.text-path {
   font-size: 8px;;
   text-anchor: start;
 }
 
-
 .plasmid svg text.title {
   font-size: 16px;
   dominant-baseline: auto;
+}
+
+.plasmid .btn-add, .plasmid .btn-sub, .plasmid .btn-full {
+  rect {
+    stroke: #e0e0e0;
+    stroke-width: 0;
+    opacity: 0.5;
+    fill: #7b7b7b;
+
+  }
+  text {
+    fill: #fff;
+  }
+  &:hover {
+    rect {
+      opacity: 0.3;
+    }
+    text {
+      fill: #000;
+    }
+  }
+
+}
+
+.plasmid {
+  .rotate_warp {
+    .rotate {
+      fill: #5c8bff;
+      opacity: 0.6;
+    }
+    .rotate_inner {
+      fill: #5c8bff;
+    }
+  }
 }

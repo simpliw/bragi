@@ -1,7 +1,7 @@
 /**
  * Created by bqxu on 16/2/2.
  */
-exports.parse = (text) => {
+export let parse = (text) => {
   let gbff = {};
   let lines = text.replace(/\r\n/g, '\n').split('\n');
   for (let lineno = 0; lineno < lines.length; lineno++) {

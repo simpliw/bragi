@@ -13,7 +13,7 @@ var COL_GE_T = 'green';
 var COL_GE_N = 'grey';
 var COL_GE_U = 'black';
 
-var col_ge = function (data) {
+var col_ge = (data) => {
   switch (data) {
     case 'a' :
       return COL_GE_A;
