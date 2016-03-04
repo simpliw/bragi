@@ -47,9 +47,9 @@ export class Pointer {
       let {x,y}=xy4angle(ang, r);
       d3.select(`#line-${id}`).attr("transform", function () {
         return transition({
-          x: -x, y: y
+          x: x, y: -y
         }, {}, {
-          angle: ang - 180
+          angle: ang
         })
       });
     });

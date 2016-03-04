@@ -97,20 +97,10 @@ export class PointerLine {
       let width = $this.getWarp().attr('width');
       let y = d3.event.y;
       let x = d3.event.x;
-      if (y < -height / 2) {
-        y = -height / 2
-      }
-      if (y > height / 2) {
-        y = height;
-      }
-      if (x > width / 2) {
-        x = width / 2
-      }
-      if (x < -width / 2) {
-        x = -width / 2;
-      }
-      let angle = angle4xy(0, 0, y, x);
-      this.moveXYHandler && this.moveXYHandler(90 - angle);
+      let {circle}=$this.scope;
+      let {x:tx,y:ty}=circle.translate();
+      let angle = angle4xy(circle.x - tx, circle.y - ty, x, y);
+      this.moveXYHandler && this.moveXYHandler(angle);
     });
     inner.call(drag);
   }
