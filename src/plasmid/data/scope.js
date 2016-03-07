@@ -1,7 +1,11 @@
 /**
  * Created by bqxu on 16/2/5.
  */
-let {r4ge,r4unitGE,radian2angle,angle4RadianLength,minAngle4angle2Feature,unitGE4r} =require("../d3-ext/scale");
+let {r4ge,r4unitGE,radian2angle,
+  angle4RadianLength,minAngle4angle2Feature,
+  unitGE4r,
+  xy4ry
+  } =require("../d3-ext/scale");
 let unitGE1 = 30;
 let unitGE2 = 12;
 let unitGE3 = 3;
@@ -52,7 +56,6 @@ export class Scope {
     this.circle = new Circle(this.width / 2, y, r - Math.ceil(this.level / 2 + 5) * 10);
     let scales = this.scales;
     this.limit = {
-      r: r - 5 * 10,
       du: Math.floor((5 * this.Liner(100) / this.Liner(percent)) / 5) * 5,
       level: function () {
         let _unitGE = Math.round(unitGE);
@@ -76,16 +79,6 @@ export class Scope {
           let feature = ft[ftl];
           if (d.loc.level % 2 != feature.loc.level % 2) {
             continue;
-          }
-          let _labelLength = `${feature.qualifier.label}`.length;
-          let tlevel = feature.loc.level2;
-          let tWidth = (Math.round(tlevel / 2 + 1) * 16 + Math.round(levelMax / 2 + 1) * 16 - 6);
-          if (d.loc.level % 2 == 1) {
-            tWidth = 0 - (Math.round(tlevel / 2) * 16 + Math.round(levelMax / 2 + 1) * 16 - 6);
-          }
-          let ta = angle4RadianLength(cr + tWidth, _labelLength * 12);
-          if (d.loc.startAngle >= feature.loc.startAngle && d.loc.startAngle <= feature.loc.startAngle + 2 * ta) {
-            used.push(tlevel)
           }
         }
         used.sort((a, b) => a > b);
@@ -112,52 +105,138 @@ export class Scope {
     return 360;
   }
 
-  viewFIndex() {
+  viewSpace() {
     let viewAngle = this.viewAngle() / 2;
     let angle = this.angle;
-    let rIndex = [];
+    let {x:rx,y:ry}=this.circle;
+    let r_outer = this.circle.r + Math.ceil(this.level / 2 + 3) * 10;
+    let r_inner = this.circle.r - Math.ceil(this.level / 2 + 3) * 10;
+    let labelFloor = Math.ceil(this.width / 20);
+    let sitePoi = [];
+    for (let i = 1; i < labelFloor; i++) {
+      let poi_outer = xy4ry(r_outer, 0 - this.circle.y + i * 20);
+      if (poi_outer != null) {
+        if (this.width / 2 - poi_outer[0].x > 20) {
+          sitePoi.push({
+            used: 0,
+            x: poi_outer[0].x,
+            y: poi_outer[0].y,
+            w: Math.floor(this.width / 2 - poi_outer[0].x),
+            type: 'outer'
+          });
+          sitePoi.push({
+            used: 0,
+            x: poi_outer[1].x,
+            y: poi_outer[1].y,
+            w: Math.floor(this.width / 2 + poi_outer[1].x),
+            type: 'outer'
+          });
+        }
+      }
+      let poi_inner = xy4ry(r_inner, 0 - this.circle.y + i * 20);
+      if (poi_inner != null) {
+        if (poi_inner[0].x > this.width / 2 - 20) {
+          sitePoi.push({
+            used: 0,
+            x: this.width / 2 - 10,
+            y: poi_inner[0].y,
+            w: Math.floor(this.width / 2 - 10),
+            type: 'inner'
+          });
+          sitePoi.push({
+            used: 0,
+            x: -(this.width / 2 - 10),
+            y: poi_inner[1].y,
+            w: Math.floor(this.width / 2 - 10),
+            type: 'inner'
+          });
+        } else {
+          sitePoi.push({
+            used: 0,
+            x: poi_inner[0].x,
+            y: poi_inner[0].y,
+            w: Math.floor(this.width / 2 - poi_inner[0].x),
+            type: 'inner'
+          });
+          sitePoi.push({
+            used: 0,
+            x: poi_inner[1].x,
+            y: poi_inner[1].y,
+            w: Math.floor(this.width / 2 + poi_inner[1].x),
+            type: 'inner'
+          });
+        }
+      }
+    }
+    return {
+      r_outer: r_outer,
+      r_inner: r_inner,
+      site_poi: sitePoi
+    }
+  }
+
+  viewFeatures() {
+    let viewAngle = this.viewAngle() / 2;
+    let angle = this.angle;
+    let viewFeature = [];
     let features = this.features;
     features.forEach(function (d, index) {
       if (d.loc != null) {
         let startAngle = d.loc.startAngle;
         let endAngle = d.loc.endAngle;
         if (viewAngle == 180) {
-          rIndex.push(index);
+          viewFeature.push({
+            index: index,
+            feature: d
+          });
           return;
         }
         if (angle < viewAngle) {
           if (startAngle < viewAngle - angle) {
-            rIndex.push(index);
+            viewFeature.push({
+              index: index,
+              feature: d
+            });
           } else if (360 + viewAngle - angle < endAngle) {
-            rIndex.push(index);
+            viewFeature.push({
+              index: index,
+              feature: d
+            });
           }
         } else if (angle > 360 - viewAngle) {
           if (endAngle > angle - viewAngle) {
-            rIndex.push(index);
+            viewFeature.push({
+              index: index,
+              feature: d
+            });
           } else if (startAngle < viewAngle - (360 - angle)) {
-            rIndex.push(index);
+            viewFeature.push({
+              index: index,
+              feature: d
+            });
           }
         } else {
           if (startAngle < angle - viewAngle && endAngle > angle - viewAngle) {
-            rIndex.push(index);
+            viewFeature.push({
+              index: index,
+              feature: d
+            });
           } else if (startAngle < angle + viewAngle && endAngle > angle + viewAngle) {
-            rIndex.push(index);
+            viewFeature.push({
+              index: index,
+              feature: d
+            });
           } else if (startAngle > angle - viewAngle && endAngle < angle + viewAngle) {
-            rIndex.push(index);
+            viewFeature.push({
+              index: index,
+              feature: d
+            });
           }
         }
       }
     });
 
-    rIndex.sort(function (a, b) {
-      let aO = features[a];
-      let bO = features[b];
-      if (minAngle4angle2Feature(aO, angle) < minAngle4angle2Feature(bO, angle)) {
-        return -1
-      }
-      return 1;
-    });
-    return rIndex;
+    return viewFeature;
   }
 
   getSvg() {
@@ -171,6 +250,10 @@ export class Scope {
   getOptionGroup() {
     return d3.select(`#og-${this.id}`);
   };
+
+  getLabelGroup() {
+    return d3.select(`#lg-${this.id}`);
+  }
 
   getLoopGroup() {
     return d3.select(`#loop-${this.id}`);
@@ -209,41 +292,42 @@ var locFeatures = function (features, length, r2) {
       if (d.qualifier.label === undefined && d.qualifier.note !== undefined) {
         d.qualifier.label = d.qualifier.note;
       }
-      let ftl = ft.length;
-      let fl = 0;
-      while (ftl--) {
-        let feature = ft[ftl];
+      let fl = [];
+      ft.forEach(function (feature) {
         let flevel = feature.loc.level;
         if (d.loc.start >= feature.loc.start && d.loc.start <= feature.loc.end) {
-          if (flevel >= fl) {
-            fl = flevel + 1;
-          }
+          fl.push(flevel);
         } else if (d.loc.end >= feature.loc.start && d.loc.end <= feature.loc.end) {
-          if (flevel >= fl) {
-            fl = flevel + 1;
+          fl.push(flevel);
+        }
+      });
+
+      let level = 0;
+      if (fl.length > 0 && fl[0] == 0) {
+        fl = fl.sort(function (i1, i2) {
+          if (i1 < i2) {
+            return -1;
+          } else {
+            return 1;
+          }
+        });
+        for (let i = 0; i < fl.length; i++) {
+          if (level == fl[i]) {
+            level++;
+          } else {
+            break;
           }
         }
       }
-      if (fl >= levelMax) {
-        levelMax = fl;
+      if (level >= levelMax) {
+        levelMax = level;
       }
-      d.loc.level = fl;
+      d.loc.level = level;
       ft.push(d);
     } else {
       d.loc = null;
     }
   });
-
   return levelMax;
 };
 
-var locOrigin = function (origin) {
-  var res = [];
-  origin.forEach(function (data, index) {
-    res.push({
-      data: data,
-      index: index
-    })
-  });
-  return res;
-};

@@ -10,9 +10,7 @@ export class Button {
   constructor(scope) {
     this.scope = scope;
     let {id,width,height}=this.scope;
-    this.g = scope.getSvg().append('g').attr("id", `og-${id}`)
-      .attr("transform", translate(width / 2, height / 2)).attr("fill", '##efefef')
-      .html('');
+    this.g = scope.getOptionGroup().html('');
     this.zoom();
     this.rotate();
     this.full();

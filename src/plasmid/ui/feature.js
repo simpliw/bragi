@@ -27,6 +27,9 @@ export class Feature {
     }).style('fill', (d) => {
       return this.scope.colorStore.getColor(d.key);
     });
+  };
+
+  label() {
     g.append("defs").append("path")
       .attr("id", function (d, index) {
         return `defPath-${id}-${index}`;
@@ -47,5 +50,5 @@ export class Feature {
     g.append("path").attr("id", (d, index) => {
       return `line-${id}-${index}`;
     });
-  };
+  }
 }

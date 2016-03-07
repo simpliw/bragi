@@ -107,3 +107,21 @@ export let minAngle4angle2Feature = (feature, angle)=> {
   });
   return aArr[0];
 };
+
+
+export let xy4ry = (r, y, cx = 0, cy = 0)=> {
+  if (Math.abs(y - cy) > r) {
+    return null;
+  }
+  let a = Math.sqrt(Math.pow(r, 2) - Math.pow(cy - y, 2));
+  if (a == 0) {
+    return null;
+  }
+  return [{
+    x: cx + a,
+    y: y
+  }, {
+    x: cx - a,
+    y: y
+  }]
+};

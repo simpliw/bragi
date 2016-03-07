@@ -60,7 +60,7 @@ export let arc = (r, startAngle = 0, endAngle = 180) => {
   let roundFlag = 1;
   if (endAngle - startAngle > 180) {
     angleFlag = 1;
-    roundFlag = 0;
+    roundFlag = 1;
   }
   res.push(`M${sX} ${-sY}`);
   res.push(`A${r},${r} 0,${angleFlag},${roundFlag} ${eX},${-eY}`);

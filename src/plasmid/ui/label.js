@@ -2,6 +2,7 @@
  * Created by bqxu on 16/3/3.
  */
 let {line,arc} =require("../d3-ext/shape");
+let {transition,translate,rotate} =require("../d3-ext/transition");
 let {
   angle4ge,
   xy4angle,
@@ -12,15 +13,118 @@ export class Label {
 
   constructor(scope) {
     this.scope = scope;
+    let {angle,origin,colorStore,id,features,width,height}=this.scope;
+    let ol = origin.length;
+    let geAngle = angle4ge(ol);
+    scope.getLabelGroup().html('');
+    let g = scope.getLabelGroup().selectAll("g").data(features).enter().append('g');
+    g.append('text').attr("id", function (d, index) {
+      return `label-${id}-${index}`;
+    }).text((d) => {
+      return d.qualifier.label;
+    });
+
+    g.append('path')
+      .attr('id', function (d, index) {
+        return `label-path-${id}-${index}`;
+      });
+    this.labelView();
+  }
+
+
+  labelView() {
+    console.log(this.scope.viewAngle());
+    let scope = this.scope;
+    let geAngle = angle4ge(scope.origin.length);
+    let viewAngle = scope.viewAngle();
+    let {site_poi,r_outer,r_inner}=this.scope.viewSpace();
+    scope.getDrawGroup().append('g').append('path').attr('d', function () {
+      return arc(r_outer, 0, 359)
+    }).style('fill', 'none').style("stroke", '#000');
+
+    scope.getDrawGroup().append('g').append('path').attr('d', function () {
+      return arc(r_inner, 0, 359)
+    }).style('fill', 'none').style("stroke", '#000');
+    let viewFeatures = this.scope.viewFeatures();
+    let $this = this;
+    scope.getLabelGroup().selectAll('text').style('fill', 'none');
+    scope.getLabelGroup().selectAll('path').style('fill', 'none');
+    viewFeatures.forEach(function (vf) {
+      let label = d3.selectAll(`#label-${scope.id}-${vf.index}`);
+      let labelPath = d3.select(`#label-path-${scope.id}-${vf.index}`);
+      let labelLength = parseInt(label.style("width"));
+      let {startAngle,endAngle}=vf.feature.loc;
+      let start = xy4angle(startAngle - scope.angle, scope.circle.r);
+      let end = xy4angle(endAngle, scope.circle.r);
+      let poi = null;
+      let index = null;
+      for (let i = 0; i < site_poi.length; i++) {
+        let s_poi = site_poi[i];
+        if (s_poi.used == 0) {
+          if (Math.abs(s_poi.x) < scope.width / 2) {
+            if (Math.abs(s_poi.y - (-start.y)) < 120 && Math.abs(s_poi.x - start.x) < 120) {
+              if (Math.abs(s_poi.w) >= labelLength) {
+                poi = s_poi;
+                s_poi.used = labelLength;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (poi != null) {
+        label.style('fill', (d) => {
+          return $this.scope.colorStore.getColor(vf.feature.key);
+        }).attr('transform', function () {
+          if (scope.viewAngle() == 360) {
+            return translate(poi.x, poi.y);
+          } else {
+            let y = poi.y + scope.circle.y - scope.width / 2;
+            return translate(poi.x, y);
+          }
+        }).attr('text-anchor', function () {
+          label.classed("label-start", null);
+          label.classed("label-end", null);
+          if (poi.type == 'outer') {
+            if (poi.x > 0) {
+              label.classed("label-start", true);
+              return 'start'
+            } else {
+              label.classed("label-end", true);
+              return 'end'
+            }
+          } else {
+            if (poi.x < 0) {
+              label.classed("label-start", true);
+              return 'start'
+            } else {
+              label.classed("label-end", true);
+              return 'end'
+            }
+          }
+        });
+        labelPath.style('fill', (d) => {
+          return $this.scope.colorStore.getColor(d.key);
+        }).attr('d', function (d) {
+
+        })
+      }
+    });
+
+  }
+
+  constructor2(scope) {
+    this.scope = scope;
     let {angle,origin,colorStore}=this.scope;
-    let feature = scope.getDrawGroup().select(`#features-${scope.id}`);
+    let $feature = scope.getDrawGroup().select(`#features-${scope.id}`);
     let ol = origin.length;
     let geAngle = angle4ge(ol);
     let $this = this;
-    this.scope.viewFIndex().forEach(function (fIndex) {
-      let fPath = feature.select(`#defPath-${scope.id}-${fIndex}`);
-      let fLine = feature.select(`#line-${scope.id}-${fIndex}`);
-      let fText = feature.select(`#text-${scope.id}-${fIndex}`);
+
+    this.scope.viewFeatures().forEach(function ({index,feature}) {
+      let fPath = $feature.select(`#defPath-${scope.id}-${index}`);
+      let fLine = $feature.select(`#line-${scope.id}-${index}`);
+      let fText = $feature.select(`#text-${scope.id}-${index}`);
       fPath.attr("d", (d)=> {
         let startAngle = d.loc.startAngle;
         let endAngle = d.loc.endAngle;

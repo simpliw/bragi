@@ -48,3 +48,11 @@
     }
   }
 }
+
+.plasmid svg text.label-start {
+  text-anchor: start;
+}
+
+.plasmid svg text.label-end {
+  text-anchor: end;
+}

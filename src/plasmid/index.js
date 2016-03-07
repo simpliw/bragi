@@ -4,7 +4,7 @@
 require('./style.scss');
 let {Scope} =require("./data/scope");
 let {viewBox,showView} =require("./d3-ext/element");
-let {transition,rotate} =require("./d3-ext/transition");
+let {transition,rotate,translate} =require("./d3-ext/transition");
 let {col_ge,ColorStore} =require("./d3-ext/color");
 let {
   percent100,
@@ -49,13 +49,17 @@ export class Plasmid {
     let scope = new Scope(this.width, this.height, gbff, svgDiv.id);
     scope.colorStore = new ColorStore();
     this.saveScope(scope);
+    let {width,height}=this.getScope();
     this.svg.append('g').attr("id", `dg-${svgDiv.id}`);
-    showView(this.getSvg(), {
-      width: this.getScope().width,
-      height: this.getScope().height,
-      viewBox: viewBox(0, 0, this.getScope().width, this.getScope().height)
+    this.svg.append('g').attr("id", `lg-${svgDiv.id}`).attr("transform", translate(width / 2, height / 2));
+    this.svg.append('g').attr("id", `og-${svgDiv.id}`).attr("transform", translate(width / 2, height / 2));
+    showView(this.getScope().getSvg(), {
+      width: width,
+      height: height,
+      viewBox: viewBox(0, 0, width, height)
     });
-    this.render(this.svg, this.getDrawGroup(), this.getScope(), 1);
+    this.render(this.getScope(), 1);
+
     this.$button = new Button(this.getScope());
     let $this = this;
 
@@ -66,7 +70,7 @@ export class Plasmid {
         zoomTimer = null;
       }
       zoomTimer = setTimeout(function () {
-        $this.render($this.svg, $this.getDrawGroup(), $this.getScope(), scale)
+        $this.render($this.getScope(), scale);
         zoomTimer = null;
       }, 500)
     });
@@ -86,6 +90,7 @@ export class Plasmid {
         x: circle.translate().x, y: circle.translate().y
       }, {}, {angle: -angle}));
       d3.select(`#name-${id}`).attr("transform", rotate(angle));
+      $this.$label.labelView();
     });
   };
 
@@ -97,23 +102,8 @@ export class Plasmid {
     return this.scope;
   }
 
-  getSvg() {
-    return d3.select(`#svg-${this.scope.id}`);
-  }
-
-  getDrawGroup() {
-    return d3.select(`#dg-${this.scope.id}`);
-  }
-
-  getOptionGroup() {
-    return d3.select(`#og-${this.scope.id}`);
-  }
-
-  getLimitGroup() {
-    return d3.select(`#limit-${this.scope.id}`);
-  }
-
-  render(svg, g, scope, scale) {
+  render(scope, scale) {
+    let g = scope.getDrawGroup();
     scope.scale(scale);
     let {id,name,angle,origin:{length},circle,limit}=this.scope;
     g.attr("transform", transition({

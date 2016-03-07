@@ -20,10 +20,10 @@ let {parse} = require('./data/parse.js');
     // Get gbff by AJAX
     if (opts.gbffUrl) $.ajax({url: opts.gbffUrl}).done(function (data) {
       opts.gbff = $.Plasmid.parse(data);
-      Plasmid(self[0], opts)
+      new Plasmid(self[0], opts)
     });
     // Render SVG
-    Plasmid(self[0], opts)
+    new Plasmid(self[0], opts)
   };
 
 })(require('jquery'));

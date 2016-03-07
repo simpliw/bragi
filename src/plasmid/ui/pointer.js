@@ -52,6 +52,12 @@ export class Pointer {
           angle: ang
         })
       });
+      d3.select(`#line-${id}`).select('text').text(function () {
+        if (ang < 0) {
+          ang = 360 + ang;
+        }
+        return Math.floor(ang / ang4ge);
+      })
     });
   };
 
