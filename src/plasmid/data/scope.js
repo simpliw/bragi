@@ -1,11 +1,12 @@
 /**
  * Created by bqxu on 16/2/5.
  */
-let {r4ge,r4unitGE,radian2angle,
+let {r4ge,r4unitGE,radian2angle,xy4angle,
   angle4RadianLength,minAngle4angle2Feature,
-  unitGE4r,
-  xy4ry
+  unitGE4r,angle4xy,
+  xy4ry,xy4rx
   } =require("../d3-ext/scale");
+let {line,arc} =require("../d3-ext/shape");
 let unitGE1 = 30;
 let unitGE2 = 12;
 let unitGE3 = 3;
@@ -23,7 +24,6 @@ export class Scope {
     this.mouseAngle = 0;
     this.lineWidth = 10;
     this.rwidth = this.showR / 2;
-    this.distWidth = this.rwidth;
     this.r1 = r4unitGE(this.ol, unitGE1);
     this.r2 = r4unitGE(this.ol, unitGE3);
     this.level = locFeatures(this.features, this.ol, this.rwidth);
@@ -105,7 +105,7 @@ export class Scope {
     return 360;
   }
 
-  viewSpace() {
+  viewSpaceByPoint() {
     let viewAngle = this.viewAngle() / 2;
     let angle = this.angle;
     let {x:rx,y:ry}=this.circle;
@@ -113,58 +113,70 @@ export class Scope {
     let r_inner = this.circle.r - Math.ceil(this.level / 2 + 3) * 10;
     let labelFloor = Math.ceil(this.width / 20);
     let sitePoi = [];
+    let sy = -this.rwidth;
+    let ey = this.rwidth;
+    if (viewAngle != 180) {
+      sy = -(this.circle.r + (this.rwidth - 75));
+      ey = -(this.circle.r - (this.rwidth + 75));
+    }
     for (let i = 1; i < labelFloor; i++) {
-      let poi_outer = xy4ry(r_outer, 0 - this.circle.y + i * 20);
+      let y = sy + i * 20;
+      let poi_outer = xy4ry(r_outer, y);
       if (poi_outer != null) {
-        if (this.width / 2 - poi_outer[0].x > 20) {
-          sitePoi.push({
-            used: 0,
-            x: poi_outer[0].x,
-            y: poi_outer[0].y,
-            w: Math.floor(this.width / 2 - poi_outer[0].x),
-            type: 'outer'
-          });
-          sitePoi.push({
-            used: 0,
-            x: poi_outer[1].x,
-            y: poi_outer[1].y,
-            w: Math.floor(this.width / 2 + poi_outer[1].x),
-            type: 'outer'
-          });
+
+        if (-poi_outer[0].y < ey) {
+          if (this.rwidth > poi_outer[0].x + 20) {
+            sitePoi.push({
+              used: 0,
+              x: poi_outer[0].x,
+              y: y,
+              w: Math.floor(this.rwidth - poi_outer[0].x),
+              type: 'outer'
+            });
+            sitePoi.push({
+              used: 0,
+              x: poi_outer[1].x,
+              y: y,
+              w: Math.floor(this.rwidth + poi_outer[1].x),
+              type: 'outer'
+            });
+          }
         }
       }
-      let poi_inner = xy4ry(r_inner, 0 - this.circle.y + i * 20);
+      let poi_inner = xy4ry(r_inner, y);
       if (poi_inner != null) {
-        if (poi_inner[0].x > this.width / 2 - 20) {
-          sitePoi.push({
-            used: 0,
-            x: this.width / 2 - 10,
-            y: poi_inner[0].y,
-            w: Math.floor(this.width / 2 - 10),
-            type: 'inner'
-          });
-          sitePoi.push({
-            used: 0,
-            x: -(this.width / 2 - 10),
-            y: poi_inner[1].y,
-            w: Math.floor(this.width / 2 - 10),
-            type: 'inner'
-          });
-        } else {
-          sitePoi.push({
-            used: 0,
-            x: poi_inner[0].x,
-            y: poi_inner[0].y,
-            w: Math.floor(this.width / 2 - poi_inner[0].x),
-            type: 'inner'
-          });
-          sitePoi.push({
-            used: 0,
-            x: poi_inner[1].x,
-            y: poi_inner[1].y,
-            w: Math.floor(this.width / 2 + poi_inner[1].x),
-            type: 'inner'
-          });
+        if (poi_outer[0].y < ey) {
+          if (poi_inner[0].x > this.rwidth) {
+            sitePoi.push({
+              used: 0,
+              x: this.rwidth - 10,
+              y: y,
+              w: Math.floor(this.rwidth - 10),
+              type: 'inner'
+            });
+            sitePoi.push({
+              used: 0,
+              x: -(this.rwidth - 10),
+              y: y,
+              w: Math.floor(this.rwidth - 10),
+              type: 'inner'
+            });
+          } else if (poi_inner[0].x > 10) {
+            sitePoi.push({
+              used: 0,
+              x: poi_inner[0].x,
+              y: y,
+              w: Math.floor(poi_inner[0].x - 10),
+              type: 'inner'
+            });
+            sitePoi.push({
+              used: 0,
+              x: poi_inner[1].x,
+              y: y,
+              w: Math.floor(poi_inner[0].x - 10),
+              type: 'inner'
+            });
+          }
         }
       }
     }
@@ -175,69 +187,78 @@ export class Scope {
     }
   }
 
-  viewFeatures() {
+  viewFeaturesByPoint() {
     let viewAngle = this.viewAngle() / 2;
     let angle = this.angle;
     let viewFeature = [];
     let features = this.features;
-    features.forEach(function (d, index) {
+    let sy = this.rwidth;
+    let ey = -this.rwidth;
+    if (viewAngle != 180) {
+      sy = -(this.circle.r + (this.rwidth - 75));
+      ey = -( this.circle.r - (this.rwidth + 75));
+    }
+    features.forEach((d, index)=> {
       if (d.loc != null) {
         let startAngle = d.loc.startAngle;
         let endAngle = d.loc.endAngle;
+        let level = d.loc.level;
+        let width = (Math.round(level / 2 + 1) * 16 + 4 );
+        if (level % 2 == 1) {
+          width = 0 - (Math.round(level / 2) * 16 - 10 + 4);
+        }
+        let start = xy4angle(startAngle - this.angle, this.circle.r - width - 5);
+        let startX = start.x;
+        let startY = -start.y;
+        let end = xy4angle(endAngle - this.angle, this.circle.r - width - 5);
+        let endX = end.x;
+        let endY = -end.y;
+        let mid = xy4angle((endAngle + startAngle) / 2 - this.angle, this.circle.r - width - 5);
+        let midX = mid.x;
+        let midY = -mid.y;
         if (viewAngle == 180) {
           viewFeature.push({
-            index: index,
-            feature: d
-          });
-          return;
-        }
-        if (angle < viewAngle) {
-          if (startAngle < viewAngle - angle) {
-            viewFeature.push({
-              index: index,
-              feature: d
-            });
-          } else if (360 + viewAngle - angle < endAngle) {
-            viewFeature.push({
-              index: index,
-              feature: d
-            });
-          }
-        } else if (angle > 360 - viewAngle) {
-          if (endAngle > angle - viewAngle) {
-            viewFeature.push({
-              index: index,
-              feature: d
-            });
-          } else if (startAngle < viewAngle - (360 - angle)) {
-            viewFeature.push({
-              index: index,
-              feature: d
-            });
-          }
+            startX, startY, endX, endY,
+            midX, midY, feature: d, index
+          })
         } else {
-          if (startAngle < angle - viewAngle && endAngle > angle - viewAngle) {
+          if (
+            (startX >= -this.rwidth && startX <= this.rwidth && sy < startY && startY < ey) ||
+            (endX >= -this.rwidth && endX <= this.rwidth && sy < endY && endY < ey) ||
+            (startX <= -this.rwidth && endX >= this.rwidth)
+          ) {
+            if (startX < -this.rwidth) {
+              startX = -this.rwidth;
+              let sxy = xy4rx(this.circle.r - width - 5, startX);
+              startY = sxy[1].y;
+              startAngle = angle4xy(0, 0, startX, startY) + this.angle;
+              if (startAngle < 0) {
+                startAngle = 360 + startAngle;
+              }
+            }
+            if (endX > this.rwidth) {
+              endX = this.rwidth;
+              let exy = xy4rx(this.circle.r - width - 5, startX);
+              endY = exy[1].y;
+              endAngle = angle4xy(0, 0, endX, endY) + this.angle;
+              if (endAngle < 0) {
+                endAngle = 360 + endAngle;
+              }
+            }
+            mid = xy4angle((endAngle + startAngle) / 2 - this.angle, this.circle.r - width - 5);
+            midX = mid.x;
+            midY = -mid.y;
             viewFeature.push({
-              index: index,
-              feature: d
-            });
-          } else if (startAngle < angle + viewAngle && endAngle > angle + viewAngle) {
-            viewFeature.push({
-              index: index,
-              feature: d
-            });
-          } else if (startAngle > angle - viewAngle && endAngle < angle + viewAngle) {
-            viewFeature.push({
-              index: index,
-              feature: d
-            });
+              startX, startY, endX, endY,
+              midX, midY, feature: d, index
+            })
           }
         }
       }
     });
-
     return viewFeature;
   }
+
 
   getSvg() {
     return d3.select(`#svg-${this.id}`);
@@ -258,6 +279,7 @@ export class Scope {
   getLoopGroup() {
     return d3.select(`#loop-${this.id}`);
   }
+
 }
 
 class Circle {

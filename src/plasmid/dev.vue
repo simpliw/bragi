@@ -44,7 +44,7 @@
     ready: function () {
       var $this = this;
 
-      $.ajax({url: this.gbff.pY108}).done(function (data) {
+      $.ajax({url: this.gbff.pY178}).done(function (data) {
         $this.plasmid = new Plasmid(document.getElementById("gene"), {
           gbff: parse(data),
           outerSize: 500

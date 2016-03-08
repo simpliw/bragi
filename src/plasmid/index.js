@@ -51,14 +51,13 @@ export class Plasmid {
     this.saveScope(scope);
     let {width,height}=this.getScope();
     this.svg.append('g').attr("id", `dg-${svgDiv.id}`);
-    this.svg.append('g').attr("id", `lg-${svgDiv.id}`).attr("transform", translate(width / 2, height / 2));
     this.svg.append('g').attr("id", `og-${svgDiv.id}`).attr("transform", translate(width / 2, height / 2));
     showView(this.getScope().getSvg(), {
       width: width,
       height: height,
       viewBox: viewBox(0, 0, width, height)
     });
-    this.render(this.getScope(), 1);
+    this.render(this.getScope(), 2);
 
     this.$button = new Button(this.getScope());
     let $this = this;
@@ -90,6 +89,7 @@ export class Plasmid {
         x: circle.translate().x, y: circle.translate().y
       }, {}, {angle: -angle}));
       d3.select(`#name-${id}`).attr("transform", rotate(angle));
+      scope.getLabelGroup().attr("transform", rotate(angle));
       $this.$label.labelView();
     });
   };
@@ -104,6 +104,7 @@ export class Plasmid {
 
   render(scope, scale) {
     let g = scope.getDrawGroup();
+    scope._scale = scale;
     scope.scale(scale);
     let {id,name,angle,origin:{length},circle,limit}=this.scope;
     g.attr("transform", transition({

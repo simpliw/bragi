@@ -59,6 +59,7 @@ export class ZoomLine {
 
     let $this = this;
     zoom.scaleExtent([1, 100])
+      .scale(scope._scale)
       .on('zoom', function () {
         let scale = d3.event.scale;
         scale = parseInt(scale);

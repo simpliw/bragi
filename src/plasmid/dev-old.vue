@@ -102,8 +102,6 @@
 
             },
             click: function () {
-              console.log(111);
-              console.log($this.plasmid.getAngle());
               $("#box").css("left", $this.plasmid.getAngle() / 360 * $this.dragHandler.maxLeft);
               $this.scale = $this.plasmid.getScale();
             }

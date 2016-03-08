@@ -125,3 +125,24 @@ export let xy4ry = (r, y, cx = 0, cy = 0)=> {
     y: y
   }]
 };
+
+export let xy4rx = (r, x, cx = 0, cy = 0)=> {
+  if (Math.abs(x - cx) > r) {
+    return null;
+  }
+  let a = Math.sqrt(Math.pow(r, 2) - Math.pow(cx - x, 2));
+  if (a == 0) {
+    return null;
+  }
+  return [{
+    y: cy + a,
+    x: x
+  }, {
+    y: cy - a,
+    x: x
+  }]
+};
+
+export let lineLength = (fx, fy, dx, dy)=> {
+  return Math.sqrt(Math.pow(dx - fx, 2) + Math.pow(dy - fy, 2))
+};
